@@ -1,4 +1,9 @@
-import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import {
+  setAudioModeAsync,
+  setIsAudioActiveAsync,
+  useAudioPlayer,
+  useAudioPlayerStatus,
+} from 'expo-audio';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { mockSongs } from '@/data/mock-songs';
@@ -19,6 +24,8 @@ type AppStateValue = {
   durationMs: number;
   isPlaying: boolean;
   isBuffering: boolean;
+  isAudioReady: boolean;
+  playbackState: string;
   activeLyricIndex: number;
   setSongById: (songId: string) => void;
   selectLanguage: (language: SupportedLanguage) => void;
@@ -48,12 +55,14 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   const currentSong = songs[currentSongIndex] ?? songs[0];
   const player = useAudioPlayer(currentSong.audioSource, {
     updateInterval: 250,
-    downloadFirst: false,
+    downloadFirst: true,
+    preferredForwardBufferDuration: 10,
   });
   const status = useAudioPlayerStatus(player);
 
   useEffect(() => {
     async function configureAudioMode() {
+      await setIsAudioActiveAsync(true);
       await setAudioModeAsync({
         playsInSilentMode: true,
         shouldPlayInBackground: false,
@@ -219,6 +228,8 @@ export function AppProvider({ children }: React.PropsWithChildren) {
       durationMs,
       isPlaying: status.playing,
       isBuffering: status.isBuffering,
+      isAudioReady: status.isLoaded,
+      playbackState: status.playbackState,
       activeLyricIndex,
       setSongById,
       selectLanguage,
@@ -242,7 +253,9 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     selectedLanguage,
     setSongById,
     songs,
+    status.isLoaded,
     status.isBuffering,
+    status.playbackState,
     status.playing,
     togglePlayback,
     translationState,

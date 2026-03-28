@@ -177,6 +177,14 @@ Why this was done:
 - to make the next backend/API milestone much easier to plug in
 - to keep the player usable even before external APIs are connected
 
+## Audio Troubleshooting
+
+If you do not hear sound right away:
+- wait for the player screen to show that audio is ready
+- press the `Play` button once after the stream finishes loading
+- increase the device or emulator media volume
+- make sure the device has internet access because the current demo tracks are streamed remotely
+
 ### Next planned milestone
 
 - create backend routes for lyrics and translation

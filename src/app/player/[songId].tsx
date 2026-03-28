@@ -23,6 +23,8 @@ export default function PlayerScreen() {
     lyricsError,
     isPlaying,
     isBuffering,
+    isAudioReady,
+    playbackState,
     progressMs,
     durationMs,
     selectedLanguage,
@@ -75,9 +77,14 @@ export default function PlayerScreen() {
           onPrevious={playPrevious}
         />
         <ThemedText style={styles.helperText} themeColor="textMuted">
-          {isBuffering
-            ? 'Buffering audio stream...'
-            : 'Audio is now coming from a real streaming source using Expo audio.'}
+          {!isAudioReady
+            ? 'Loading the audio file. Wait a moment, then press Play.'
+            : isBuffering
+              ? 'Audio loaded, but still buffering the stream...'
+              : 'Audio is ready. If you still hear nothing, raise device volume and tap Play again.'}
+        </ThemedText>
+        <ThemedText style={styles.helperText} themeColor="textMuted">
+          Player status: {playbackState || 'unknown'}
         </ThemedText>
       </View>
 
