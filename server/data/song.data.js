@@ -1,14 +1,10 @@
-import { resolveAudioSource } from '@/data/audio-assets';
-import { Song } from '@/types/music';
-
-export const mockSongs: Song[] = [
+const songs = [
   {
     id: 'midnight-city-lights',
     title: 'Midnight City Lights',
     artist: 'Aarya Nova',
     album: 'Neon Echoes',
     audioAssetKey: 'midnight-city-lights',
-    audioSource: resolveAudioSource('midnight-city-lights'),
     durationMs: 205000,
     coverColor: '#17312A',
     accentColor: '#1ED760',
@@ -47,50 +43,6 @@ export const mockSongs: Song[] = [
           spanish: 'Pintamos nuestros nombres en azul eléctrico',
         },
       },
-      {
-        id: 'm4',
-        timestampMs: 69000,
-        original: 'Every passing train keeps pulling me to you',
-        translations: {
-          english: 'Every passing train keeps pulling me to you',
-          hindi: 'हर गुजरती ट्रेन मुझे तुम्हारी ओर खींचती रहती है',
-          telugu: 'ప్రతి దూసుకెళ్తున్న రైలు నన్ను నీ వైపు లాగుతుంది',
-          spanish: 'Cada tren que pasa me sigue llevando hacia ti',
-        },
-      },
-      {
-        id: 'm5',
-        timestampMs: 98000,
-        original: 'City lights, stay with me tonight',
-        translations: {
-          english: 'City lights, stay with me tonight',
-          hindi: 'ओ शहर की रोशनी, आज रात मेरे साथ रहो',
-          telugu: 'నగర దీపాలా, ఈ రాత్రి నాతోనే ఉండు',
-          spanish: 'Luces de la ciudad, quédate conmigo esta noche',
-        },
-      },
-      {
-        id: 'm6',
-        timestampMs: 131000,
-        original: 'Turn this silence into satellite sound',
-        translations: {
-          english: 'Turn this silence into satellite sound',
-          hindi: 'इस ख़ामोशी को सैटेलाइट की ध्वनि में बदल दो',
-          telugu: 'ఈ నిశ్శబ్దాన్ని ఉపగ్రహ ధ్వనిగా మార్చు',
-          spanish: 'Convierte este silencio en sonido satelital',
-        },
-      },
-      {
-        id: 'm7',
-        timestampMs: 166000,
-        original: 'When the chorus lands, our world spins around',
-        translations: {
-          english: 'When the chorus lands, our world spins around',
-          hindi: 'जब मुखड़ा आता है, हमारी दुनिया घूमने लगती है',
-          telugu: 'పల్లవి మొదలైతే మన లోకం తిరుగుతుంది',
-          spanish: 'Cuando llega el coro, nuestro mundo gira',
-        },
-      },
     ],
   },
   {
@@ -99,7 +51,6 @@ export const mockSongs: Song[] = [
     artist: 'Luna Harbor',
     album: 'Blue Archive',
     audioAssetKey: 'ocean-memory',
-    audioSource: resolveAudioSource('ocean-memory'),
     durationMs: 238000,
     coverColor: '#11283A',
     accentColor: '#5FD1FF',
@@ -138,39 +89,8 @@ export const mockSongs: Song[] = [
           spanish: 'Escucho tu nombre en el grito de las aves marinas',
         },
       },
-      {
-        id: 'o4',
-        timestampMs: 96000,
-        original: 'Blue horizon, teach my hands to fly',
-        translations: {
-          english: 'Blue horizon, teach my hands to fly',
-          hindi: 'नीले क्षितिज, मेरे हाथों को उड़ना सिखाओ',
-          telugu: 'నీలి దిక్సూచి, నా చేతులకు ఎగరడం నేర్పు',
-          spanish: 'Horizonte azul, enséñales a mis manos a volar',
-        },
-      },
-      {
-        id: 'o5',
-        timestampMs: 141000,
-        original: 'Ocean memory, never let me drift too far',
-        translations: {
-          english: 'Ocean memory, never let me drift too far',
-          hindi: 'समुद्र की याद, मुझे बहुत दूर बहने मत देना',
-          telugu: 'సముద్ర జ్ఞాపకం, నన్ను చాలా దూరం ఒయలనీయం',
-          spanish: 'Memoria del océano, no me dejes alejarme demasiado',
-        },
-      },
-      {
-        id: 'o6',
-        timestampMs: 188000,
-        original: 'Keep me anchored where your echoes are',
-        translations: {
-          english: 'Keep me anchored where your echoes are',
-          hindi: 'मुझे वहीं थामे रखो जहाँ तुम्हारी गूँज है',
-          telugu: 'నీ ప్రతిధ్వనులు ఉన్న చోట నన్ను నిలిపి ఉంచు',
-          spanish: 'Mantenme anclado donde están tus ecos',
-        },
-      },
     ],
   },
 ];
+
+module.exports = { songs };

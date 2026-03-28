@@ -25,7 +25,7 @@ export async function translateLyrics(
     }));
   }
 
-  const endpoint = buildApiUrl('/translate-lyrics');
+  const endpoint = buildApiUrl('/api/translate-lyrics');
 
   if (endpoint) {
     const response = await fetch(endpoint, {

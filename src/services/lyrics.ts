@@ -8,7 +8,7 @@ type TimedLyricsResponse = {
 };
 
 export async function fetchTimedLyrics(songId: string): Promise<LyricLine[]> {
-  const endpoint = buildApiUrl(`/lyrics?songId=${encodeURIComponent(songId)}`);
+  const endpoint = buildApiUrl(`/api/lyrics?songId=${encodeURIComponent(songId)}`);
 
   if (endpoint) {
     const response = await fetch(endpoint);

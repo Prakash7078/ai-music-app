@@ -12,7 +12,15 @@ import { ThemedText } from '@/components/themed-text';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { songs, currentSong, selectedLanguage, selectLanguage, setSongById } = useAppState();
+  const {
+    songs,
+    songsState,
+    songsError,
+    currentSong,
+    selectedLanguage,
+    selectLanguage,
+    setSongById,
+  } = useAppState();
 
   return (
     <ScreenContainer>
@@ -34,6 +42,27 @@ export default function HomeScreen() {
             style={styles.primaryButton}>
             <ThemedText style={styles.primaryButtonLabel}>Open player</ThemedText>
           </Pressable>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <SectionHeader
+          eyebrow="Backend"
+          title="Songs from backend API"
+          subtitle="The frontend now supports fetching songs from Express. Without a backend URL, it keeps using local fallback data so development stays smooth."
+        />
+        <View style={styles.noteCard}>
+          <ThemedText style={styles.noteTitle}>Songs API status</ThemedText>
+          <ThemedText style={styles.noteText} themeColor="textSecondary">
+            {songsState === 'loading'
+              ? 'Loading songs from the backend...'
+              : songsState === 'error'
+                ? 'Backend fetch failed. Falling back to local songs.'
+                : 'Songs are ready.'}
+          </ThemedText>
+          {songsError ? (
+            <ThemedText style={styles.apiErrorText}>{songsError}</ThemedText>
+          ) : null}
         </View>
       </View>
 
@@ -142,5 +171,11 @@ const styles = StyleSheet.create({
   noteText: {
     fontSize: Typography.body,
     lineHeight: 22,
+  },
+  apiErrorText: {
+    color: '#FCA5A5',
+    fontSize: Typography.caption,
+    lineHeight: 18,
+    fontWeight: '600',
   },
 });

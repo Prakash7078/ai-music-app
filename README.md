@@ -38,6 +38,20 @@ The app is planned to include:
 - Express
 - SQL or MongoDB
 
+## Backend Setup
+
+The project now includes a basic Express backend in the `server/` folder with:
+- routes
+- controllers
+- models
+- middleware
+
+Start the backend with:
+
+```bash
+npm run server
+```
+
 ## Current Progress
 
 The project setup is complete, and the first frontend foundation milestone is implemented.
@@ -53,11 +67,12 @@ The project setup is complete, and the first frontend foundation milestone is im
 - Added reusable UI components for song cards, player controls, progress display, and language selection
 
 ### Current limitation
-- Audio playback now uses a real streaming audio source through Expo audio
+- Audio playback now uses bundled local demo audio through Expo audio
+- Songs can load from the backend API when configured, otherwise they fall back to local demo data
 - Lyrics now pass through a service layer with API-ready fetch and translation functions
 - If no backend URL is configured, the app falls back to local demo lyric data
 - Real third-party lyrics and translation providers are not connected yet
-- Backend work has not started yet
+- Backend is scaffolded, but authentication and database integration have not started yet
 
 ## Project Structure
 
@@ -85,6 +100,14 @@ src/
     music.ts
   utils/
     time.ts
+server/
+  controllers/
+  data/
+  middleware/
+  models/
+  routes/
+  app.js
+  server.js
 ```
 
 ## What Each Main File Does
@@ -131,6 +154,12 @@ EXPO_PUBLIC_API_BASE_URL=http://YOUR_LOCAL_IP:3000
 ```
 
 Without this value, the app uses local fallback lyric and translation data so development can continue.
+
+For Android emulator testing, `10.0.2.2` usually points back to your computer:
+
+```bash
+EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:3000
+```
 
 ## Development Log
 
@@ -185,15 +214,28 @@ If you do not hear sound right away:
 - increase the device or emulator media volume
 - use the latest app reload because the demo tracks are now bundled locally inside the project
 
+### Milestone 4: Backend song API
+
+Implemented:
+- added an Express backend under `server/`
+- created routes, controllers, models, and middleware
+- added `/api/health`, `/api/songs`, `/api/lyrics`, and `/api/translate-lyrics`
+- connected the frontend song list to a songs service
+- kept frontend fallback behavior when the backend URL is not configured
+
+Why this was done:
+- to move song data loading toward a real full-stack structure
+- to match the preferred backend learning flow of routes, controllers, models, and middleware
+- to prepare the app for auth, database models, and protected APIs next
+
 ### Next planned milestone
 
-- create backend routes for lyrics and translation
-- connect the frontend service layer to those backend endpoints
-- add user authentication and protected music data flow
+- add authentication routes and middleware
+- create user and session models
+- connect the frontend to login/signup flow
 
 ## GitHub Workflow Note
 
 I can keep updating this README as we build so you always understand what changed.
 
-For pushing changes to GitHub from this local repo, the repository first needs a Git remote configured, such as `origin`.
-Right now this project does not have a GitHub remote connected yet, so pushes cannot happen from this checkout until that is set up.
+The repo is connected to GitHub, and each milestone can be committed, documented in this README, and pushed as we go.

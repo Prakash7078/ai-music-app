@@ -14,6 +14,7 @@ export type Song = {
   title: string;
   artist: string;
   album: string;
+  audioAssetKey: string;
   audioSource: string | number;
   durationMs: number;
   coverColor: string;
@@ -21,3 +22,5 @@ export type Song = {
   description: string;
   lyrics: LyricLine[];
 };
+
+export type SongApiRecord = Omit<Song, 'audioSource'>;

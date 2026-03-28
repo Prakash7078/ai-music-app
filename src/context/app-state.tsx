@@ -8,11 +8,14 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 
 import { mockSongs } from '@/data/mock-songs';
 import { fetchTimedLyrics } from '@/services/lyrics';
+import { fetchSongs } from '@/services/songs';
 import { translateLyrics } from '@/services/translation';
 import { LyricLine, LyricsLoadState, Song, SupportedLanguage } from '@/types/music';
 
 type AppStateValue = {
   songs: Song[];
+  songsState: LyricsLoadState;
+  songsError: string | null;
   currentSong: Song;
   currentSongIndex: number;
   lyrics: LyricLine[];
@@ -42,23 +45,66 @@ function getActiveLyricIndex(lyrics: LyricLine[], progressMs: number) {
 }
 
 export function AppProvider({ children }: React.PropsWithChildren) {
-  const songs = mockSongs;
+  const [songs, setSongs] = useState<Song[]>(mockSongs);
+  const [songsState, setSongsState] = useState<LyricsLoadState>('idle');
+  const [songsError, setSongsError] = useState<string | null>(null);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('english');
   const [shouldAutoPlay, setShouldAutoPlay] = useState(true);
-  const [baseLyrics, setBaseLyrics] = useState<LyricLine[]>(songs[0]?.lyrics ?? []);
-  const [lyrics, setLyrics] = useState<LyricLine[]>(songs[0]?.lyrics ?? []);
+  const [baseLyrics, setBaseLyrics] = useState<LyricLine[]>(mockSongs[0]?.lyrics ?? []);
+  const [lyrics, setLyrics] = useState<LyricLine[]>(mockSongs[0]?.lyrics ?? []);
   const [lyricsState, setLyricsState] = useState<LyricsLoadState>('idle');
   const [translationState, setTranslationState] = useState<LyricsLoadState>('idle');
   const [lyricsError, setLyricsError] = useState<string | null>(null);
 
-  const currentSong = songs[currentSongIndex] ?? songs[0];
+  const currentSong = songs[currentSongIndex] ?? songs[0] ?? mockSongs[0];
   const player = useAudioPlayer(currentSong.audioSource, {
     updateInterval: 250,
     downloadFirst: true,
     preferredForwardBufferDuration: 10,
   });
   const status = useAudioPlayerStatus(player);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadSongs() {
+      setSongsState('loading');
+      setSongsError(null);
+
+      try {
+        const fetchedSongs = await fetchSongs();
+
+        if (isCancelled || fetchedSongs.length === 0) {
+          return;
+        }
+
+        setSongs(fetchedSongs);
+        setSongsState('ready');
+      } catch (error) {
+        if (isCancelled) {
+          return;
+        }
+
+        const message = error instanceof Error ? error.message : 'Unable to load songs';
+        setSongsError(message);
+        setSongsState('error');
+        setSongs(mockSongs);
+      }
+    }
+
+    loadSongs();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (currentSongIndex >= songs.length && songs.length > 0) {
+      setCurrentSongIndex(0);
+    }
+  }, [currentSongIndex, songs.length]);
 
   useEffect(() => {
     async function configureAudioMode() {
@@ -217,6 +263,8 @@ export function AppProvider({ children }: React.PropsWithChildren) {
 
     return {
       songs,
+      songsState,
+      songsError,
       currentSong,
       currentSongIndex,
       lyrics,
@@ -253,8 +301,10 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     selectedLanguage,
     setSongById,
     songs,
-    status.isLoaded,
+    songsError,
+    songsState,
     status.isBuffering,
+    status.isLoaded,
     status.playbackState,
     status.playing,
     togglePlayback,
