@@ -1,7 +1,7 @@
+import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { mockSongs } from '@/data/mock-songs';
-import { clamp } from '@/utils/time';
 import { Song, SupportedLanguage } from '@/types/music';
 
 type AppStateValue = {
@@ -10,14 +10,16 @@ type AppStateValue = {
   currentSongIndex: number;
   selectedLanguage: SupportedLanguage;
   progressMs: number;
+  durationMs: number;
   isPlaying: boolean;
+  isBuffering: boolean;
   activeLyricIndex: number;
   setSongById: (songId: string) => void;
   selectLanguage: (language: SupportedLanguage) => void;
   togglePlayback: () => void;
   playNext: () => void;
   playPrevious: () => void;
-  seekTo: (nextProgressMs: number) => void;
+  seekTo: (nextProgressMs: number) => Promise<void>;
 };
 
 const AppStateContext = createContext<AppStateValue | null>(null);
@@ -27,19 +29,51 @@ function getActiveLyricIndex(song: Song, progressMs: number) {
 }
 
 export function AppProvider({ children }: React.PropsWithChildren) {
-  const [songs] = useState(mockSongs);
+  const songs = mockSongs;
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('english');
-  const [progressMs, setProgressMs] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [shouldAutoPlay, setShouldAutoPlay] = useState(true);
 
   const currentSong = songs[currentSongIndex] ?? songs[0];
+  const player = useAudioPlayer(currentSong.audioSource, {
+    updateInterval: 250,
+    downloadFirst: false,
+  });
+  const status = useAudioPlayerStatus(player);
+
+  useEffect(() => {
+    async function configureAudioMode() {
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        shouldPlayInBackground: false,
+        interruptionMode: 'duckOthers',
+      });
+    }
+
+    configureAudioMode().catch((error) => {
+      console.warn('Failed to configure audio mode', error);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (status.isLoaded && shouldAutoPlay) {
+      player.play();
+    }
+  }, [player, shouldAutoPlay, status.isLoaded]);
+
+  useEffect(() => {
+    if (status.didJustFinish) {
+      setCurrentSongIndex((currentIndex) => (currentIndex + 1) % songs.length);
+      setShouldAutoPlay(true);
+    }
+  }, [songs.length, status.didJustFinish]);
 
   const setSongById = useCallback(
     (songId: string) => {
       const nextIndex = songs.findIndex((song) => song.id === songId);
       if (nextIndex >= 0) {
         setCurrentSongIndex(nextIndex);
+        setShouldAutoPlay(true);
       }
     },
     [songs]
@@ -50,48 +84,38 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   }, []);
 
   const togglePlayback = useCallback(() => {
-    setIsPlaying((currentValue) => !currentValue);
-  }, []);
+    if (status.playing) {
+      player.pause();
+      setShouldAutoPlay(false);
+      return;
+    }
+
+    player.play();
+    setShouldAutoPlay(true);
+  }, [player, status.playing]);
 
   const playNext = useCallback(() => {
     setCurrentSongIndex((currentIndex) => (currentIndex + 1) % songs.length);
+    setShouldAutoPlay(true);
   }, [songs.length]);
 
   const playPrevious = useCallback(() => {
     setCurrentSongIndex((currentIndex) => (currentIndex - 1 + songs.length) % songs.length);
+    setShouldAutoPlay(true);
   }, [songs.length]);
 
   const seekTo = useCallback(
-    (nextProgressMs: number) => {
-      setProgressMs(clamp(nextProgressMs, 0, currentSong.durationMs));
+    async (nextProgressMs: number) => {
+      await player.seekTo(nextProgressMs / 1000);
     },
-    [currentSong.durationMs]
+    [player]
   );
 
-  useEffect(() => {
-    if (!isPlaying) {
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setProgressMs((currentProgress) => {
-        const nextProgress = currentProgress + 1000;
-
-        if (nextProgress >= currentSong.durationMs) {
-          setCurrentSongIndex((currentIndex) => (currentIndex + 1) % songs.length);
-          return 0;
-        }
-
-        return nextProgress;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [currentSong.durationMs, isPlaying, songs.length]);
-
-  useEffect(() => {
-    setProgressMs(0);
-  }, [currentSongIndex]);
+  const progressMs = Math.round((status.currentTime ?? 0) * 1000);
+  const durationMs =
+    status.duration && status.duration > 0
+      ? Math.round(status.duration * 1000)
+      : currentSong.durationMs;
 
   const value = useMemo<AppStateValue>(() => {
     const activeLyricIndex = Math.max(getActiveLyricIndex(currentSong, progressMs), 0);
@@ -102,7 +126,9 @@ export function AppProvider({ children }: React.PropsWithChildren) {
       currentSongIndex,
       selectedLanguage,
       progressMs,
-      isPlaying,
+      durationMs,
+      isPlaying: status.playing,
+      isBuffering: status.isBuffering,
       activeLyricIndex,
       setSongById,
       selectLanguage,
@@ -114,7 +140,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   }, [
     currentSong,
     currentSongIndex,
-    isPlaying,
+    durationMs,
     playNext,
     playPrevious,
     progressMs,
@@ -123,6 +149,8 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     selectedLanguage,
     setSongById,
     songs,
+    status.isBuffering,
+    status.playing,
     togglePlayback,
   ]);
 

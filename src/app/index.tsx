@@ -41,7 +41,7 @@ export default function HomeScreen() {
         <SectionHeader
           eyebrow="Translation"
           title="Preferred lyric language"
-          subtitle="Right now this uses local multilingual demo data. In the next step, we’ll replace this with a real translation API."
+          subtitle="The app now plays real streaming audio. Lyrics are still demo content for now, and the next step is replacing translations with a real API."
         />
         <LanguageSelector value={selectedLanguage} onChange={selectLanguage} />
       </View>
@@ -71,7 +71,7 @@ export default function HomeScreen() {
       <View style={styles.noteCard}>
         <ThemedText style={styles.noteTitle}>How this maps to your learning flow</ThemedText>
         <ThemedText style={styles.noteText} themeColor="textSecondary">
-          Frontend: screens, reusable components, shared state, and design system first.
+          Frontend: screens, reusable components, shared state, design system, and real audio playback.
         </ThemedText>
         <ThemedText style={styles.noteText} themeColor="textSecondary">
           Backend next: auth routes, song APIs, lyrics API proxy, translation controller, and DB models.

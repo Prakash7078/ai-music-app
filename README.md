@@ -53,8 +53,8 @@ The project setup is complete, and the first frontend foundation milestone is im
 - Added reusable UI components for song cards, player controls, progress display, and language selection
 
 ### Current limitation
-- Playback is currently mocked with app state and a timer so the UI and logic are easier to understand first
-- Real audio playback has not been connected yet
+- Audio playback now uses a real streaming audio source through Expo audio
+- Lyrics are still demo data and are not fetched from a lyrics provider yet
 - Real translation and lyrics APIs have not been connected yet
 - Backend work has not started yet
 
@@ -137,11 +137,25 @@ Why this was done:
 - to make the next steps easier to understand and build incrementally
 - to keep the learning process clear before adding real APIs and backend code
 
+### Milestone 2: Real audio playback
+
+Implemented:
+- installed `expo-audio`
+- replaced mocked playback progress with real playback status
+- connected the shared app state to a real audio player
+- made play, pause, next, previous, and seek work through the actual player
+- updated the player screen so lyrics follow live playback time
+
+Why this was done:
+- to move from UI-only simulation into real music app behavior
+- to make lyric syncing depend on actual playback time instead of a timer
+- to prepare the app for real lyrics and translation APIs in the next step
+
 ### Next planned milestone
 
-- connect real audio playback
-- sync the UI with real playback position
-- keep lyric highlighting connected to actual playback time
+- fetch timed lyrics from a real lyrics provider
+- connect translated lyrics to a real translation API
+- keep translated lyrics synced with live playback time
 
 ## GitHub Workflow Note
 

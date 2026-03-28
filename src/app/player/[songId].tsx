@@ -18,7 +18,9 @@ export default function PlayerScreen() {
   const {
     currentSong,
     isPlaying,
+    isBuffering,
     progressMs,
+    durationMs,
     selectedLanguage,
     activeLyricIndex,
     selectLanguage,
@@ -35,7 +37,7 @@ export default function PlayerScreen() {
     }
   }, [setSongById, songId]);
 
-  const progressRatio = progressMs / currentSong.durationMs;
+  const progressRatio = durationMs > 0 ? progressMs / durationMs : 0;
 
   return (
     <ScreenContainer>
@@ -57,17 +59,22 @@ export default function PlayerScreen() {
             {formatDuration(progressMs)}
           </ThemedText>
           <ThemedText style={styles.timeLabel} themeColor="textMuted">
-            {formatDuration(currentSong.durationMs)}
+            {formatDuration(durationMs)}
           </ThemedText>
         </View>
 
-        <ProgressSlider progress={progressRatio} onSeek={(ratio) => seekTo(ratio * currentSong.durationMs)} />
+        <ProgressSlider progress={progressRatio} onSeek={(ratio) => seekTo(ratio * durationMs)} />
         <PlayerControls
           isPlaying={isPlaying}
           onPlayPause={togglePlayback}
           onNext={playNext}
           onPrevious={playPrevious}
         />
+        <ThemedText style={styles.helperText} themeColor="textMuted">
+          {isBuffering
+            ? 'Buffering audio stream...'
+            : 'Audio is now coming from a real streaming source using Expo audio.'}
+        </ThemedText>
       </View>
 
       <View style={styles.section}>
@@ -78,7 +85,7 @@ export default function PlayerScreen() {
       <View style={styles.section}>
         <ThemedText style={styles.sectionTitle}>Time-synced lyrics</ThemedText>
         <ThemedText style={styles.sectionSubtitle} themeColor="textMuted">
-          The highlighted line changes with playback progress. Next we’ll connect this to real audio and API-powered translation.
+          The highlighted line now follows real playback time. Next we’ll fetch actual lyrics and replace local translations with an API.
         </ThemedText>
 
         <View style={styles.lyricList}>
@@ -160,6 +167,10 @@ const styles = StyleSheet.create({
   sectionSubtitle: {
     fontSize: Typography.body,
     lineHeight: 22,
+  },
+  helperText: {
+    fontSize: Typography.caption,
+    lineHeight: 18,
   },
   lyricList: {
     gap: Spacing.sm,
