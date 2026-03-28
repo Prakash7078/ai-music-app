@@ -1,98 +1,146 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
+import { LanguageSelector } from '@/components/language-selector';
+import { ScreenContainer } from '@/components/screen-container';
+import { SectionHeader } from '@/components/section-header';
+import { SongCard } from '@/components/song-card';
+import { AppTheme, Radius, Spacing, Typography } from '@/constants/theme';
+import { useAppState } from '@/context/app-state';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
 
 export default function HomeScreen() {
+  const router = useRouter();
+  const { songs, currentSong, selectedLanguage, selectLanguage, setSongById } = useAppState();
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <ScreenContainer>
+      <View style={styles.heroCard}>
+        <SectionHeader
+          eyebrow="AI Music App"
+          title="Build your Spotify-style streaming app"
+          subtitle="We’ve replaced the starter template with a real app foundation. This first step gives you navigation, shared state, multilingual lyric data, and a player screen to extend next."
+        />
 
-        <ThemedText type="code" style={styles.code}>
-          get started
+        <View style={styles.heroFooter}>
+          <View style={styles.nowPlayingBadge}>
+            <ThemedText style={styles.badgeLabel}>Now queued</ThemedText>
+            <ThemedText style={styles.badgeValue}>{currentSong.title}</ThemedText>
+          </View>
+
+          <Pressable
+            onPress={() => router.push(`/player/${currentSong.id}`)}
+            style={styles.primaryButton}>
+            <ThemedText style={styles.primaryButtonLabel}>Open player</ThemedText>
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <SectionHeader
+          eyebrow="Translation"
+          title="Preferred lyric language"
+          subtitle="Right now this uses local multilingual demo data. In the next step, we’ll replace this with a real translation API."
+        />
+        <LanguageSelector value={selectedLanguage} onChange={selectLanguage} />
+      </View>
+
+      <View style={styles.section}>
+        <SectionHeader
+          eyebrow="Songs"
+          title="Trending for you"
+          subtitle="Tap any song card to set it as the active track and open the player screen."
+        />
+
+        <View style={styles.songList}>
+          {songs.map((song) => (
+            <SongCard
+              key={song.id}
+              song={song}
+              isActive={song.id === currentSong.id}
+              onPress={() => {
+                setSongById(song.id);
+                router.push(`/player/${song.id}`);
+              }}
+            />
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.noteCard}>
+        <ThemedText style={styles.noteTitle}>How this maps to your learning flow</ThemedText>
+        <ThemedText style={styles.noteText} themeColor="textSecondary">
+          Frontend: screens, reusable components, shared state, and design system first.
         </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+        <ThemedText style={styles.noteText} themeColor="textSecondary">
+          Backend next: auth routes, song APIs, lyrics API proxy, translation controller, and DB models.
+        </ThemedText>
+      </View>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+  heroCard: {
+    backgroundColor: '#121A16',
+    padding: Spacing.xl,
+    borderRadius: Radius.xl,
+    gap: Spacing.lg,
+    borderWidth: 1,
+    borderColor: AppTheme.colors.border,
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+  heroFooter: {
+    gap: Spacing.md,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  nowPlayingBadge: {
+    gap: 4,
   },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
+  badgeLabel: {
+    color: AppTheme.colors.textMuted,
     textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    fontSize: Typography.caption,
+    fontWeight: '700',
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  badgeValue: {
+    color: AppTheme.colors.text,
+    fontSize: Typography.h3,
+    fontWeight: '700',
+  },
+  primaryButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.round,
+    backgroundColor: AppTheme.colors.primary,
+  },
+  primaryButtonLabel: {
+    color: AppTheme.colors.primaryText,
+    fontWeight: '800',
+    fontSize: Typography.body,
+  },
+  section: {
+    gap: Spacing.md,
+  },
+  songList: {
+    gap: Spacing.md,
+  },
+  noteCard: {
+    gap: 8,
+    backgroundColor: AppTheme.colors.card,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: AppTheme.colors.border,
+  },
+  noteTitle: {
+    color: AppTheme.colors.text,
+    fontSize: Typography.h3,
+    fontWeight: '700',
+  },
+  noteText: {
+    fontSize: Typography.body,
+    lineHeight: 22,
   },
 });
