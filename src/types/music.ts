@@ -20,6 +20,9 @@ export type Song = {
   coverColor: string;
   accentColor: string;
   description: string;
+  artworkUrl?: string;
+  externalUrl?: string;
+  sourceProvider?: string;
   lyrics: LyricLine[];
 };
 

@@ -45,6 +45,7 @@ The project now includes a basic Express backend in the `server/` folder with:
 - controllers
 - models
 - middleware
+- services
 
 Start the backend with:
 
@@ -161,6 +162,14 @@ For Android emulator testing, `10.0.2.2` usually points back to your computer:
 EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:3000
 ```
 
+To use Audius-backed discovery in the backend, add:
+
+```bash
+AUDIUS_API_BEARER_TOKEN=your_audius_bearer_token
+```
+
+Without this token, the backend falls back to local demo songs.
+
 ## Development Log
 
 ### Milestone 1: App foundation
@@ -227,6 +236,20 @@ Why this was done:
 - to move song data loading toward a real full-stack structure
 - to match the preferred backend learning flow of routes, controllers, models, and middleware
 - to prepare the app for auth, database models, and protected APIs next
+
+### Milestone 5: Audius discovery integration
+
+Implemented:
+- added an Audius service in the backend
+- added `/api/discover/trending` for trending songs
+- added `/api/search?q=...` for track search
+- switched the frontend songs fetch to use the new trending endpoint
+- kept local fallback behavior when the Audius bearer token is not configured
+
+Why this was done:
+- to start pulling songs from a real music catalog API
+- to keep the backend architecture clean by isolating third-party API logic in a service
+- to let the frontend grow toward real discovery and search without breaking the learning flow
 
 ### Next planned milestone
 

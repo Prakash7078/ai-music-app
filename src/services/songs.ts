@@ -6,6 +6,8 @@ import { wait } from '@/utils/async';
 
 type SongsResponse = {
   songs: SongApiRecord[];
+  source?: string;
+  message?: string;
 };
 
 function hydrateSong(song: SongApiRecord): Song {
@@ -16,7 +18,7 @@ function hydrateSong(song: SongApiRecord): Song {
 }
 
 export async function fetchSongs(): Promise<Song[]> {
-  const endpoint = buildApiUrl('/api/songs');
+  const endpoint = buildApiUrl('/api/discover/trending');
 
   if (endpoint) {
     const response = await fetch(endpoint);
