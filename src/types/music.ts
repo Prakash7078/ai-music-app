@@ -14,7 +14,7 @@ export type Song = {
   title: string;
   artist: string;
   album: string;
-  audioSource: string;
+  audioSource: string | number;
   durationMs: number;
   coverColor: string;
   accentColor: string;

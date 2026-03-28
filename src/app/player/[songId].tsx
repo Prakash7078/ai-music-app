@@ -80,8 +80,8 @@ export default function PlayerScreen() {
           {!isAudioReady
             ? 'Loading the audio file. Wait a moment, then press Play.'
             : isBuffering
-              ? 'Audio loaded, but still buffering the stream...'
-              : 'Audio is ready. If you still hear nothing, raise device volume and tap Play again.'}
+              ? 'Audio loaded, but still buffering the file...'
+              : 'Audio is ready from a bundled local file. If you still hear nothing, raise emulator media volume and tap Play again.'}
         </ThemedText>
         <ThemedText style={styles.helperText} themeColor="textMuted">
           Player status: {playbackState || 'unknown'}

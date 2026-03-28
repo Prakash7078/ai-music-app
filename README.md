@@ -183,7 +183,7 @@ If you do not hear sound right away:
 - wait for the player screen to show that audio is ready
 - press the `Play` button once after the stream finishes loading
 - increase the device or emulator media volume
-- make sure the device has internet access because the current demo tracks are streamed remotely
+- use the latest app reload because the demo tracks are now bundled locally inside the project
 
 ### Next planned milestone
 
