@@ -7,6 +7,8 @@ export type LyricLine = {
   translations: Record<SupportedLanguage, string>;
 };
 
+export type LyricsLoadState = 'idle' | 'loading' | 'ready' | 'error';
+
 export type Song = {
   id: string;
   title: string;

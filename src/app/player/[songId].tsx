@@ -17,6 +17,10 @@ export default function PlayerScreen() {
   const { songId } = useLocalSearchParams<{ songId: string }>();
   const {
     currentSong,
+    lyrics,
+    lyricsState,
+    translationState,
+    lyricsError,
     isPlaying,
     isBuffering,
     progressMs,
@@ -85,11 +89,32 @@ export default function PlayerScreen() {
       <View style={styles.section}>
         <ThemedText style={styles.sectionTitle}>Time-synced lyrics</ThemedText>
         <ThemedText style={styles.sectionSubtitle} themeColor="textMuted">
-          The highlighted line now follows real playback time. Next we’ll fetch actual lyrics and replace local translations with an API.
+          Lyrics now flow through a fetch + translate service layer. If no backend URL is configured, the app gracefully falls back to local demo data so you can keep learning and building.
         </ThemedText>
 
+        <View style={styles.statusCard}>
+          <ThemedText style={styles.statusLabel}>Lyrics status</ThemedText>
+          <ThemedText style={styles.statusText} themeColor="textSecondary">
+            {lyricsState === 'loading'
+              ? 'Loading timed lyrics...'
+              : lyricsState === 'error'
+                ? 'Lyrics request failed. Using fallback data.'
+                : 'Timed lyrics ready.'}
+          </ThemedText>
+          <ThemedText style={styles.statusText} themeColor="textSecondary">
+            {translationState === 'loading'
+              ? 'Translating into your selected language...'
+              : translationState === 'error'
+                ? 'Translation request failed. Showing available fallback text.'
+                : 'Translation layer ready.'}
+          </ThemedText>
+          {lyricsError ? (
+            <ThemedText style={styles.errorText}>{lyricsError}</ThemedText>
+          ) : null}
+        </View>
+
         <View style={styles.lyricList}>
-          {currentSong.lyrics.map((line, index) => (
+          {lyrics.map((line, index) => (
             <LyricLine
               key={line.id}
               line={line}
@@ -174,5 +199,28 @@ const styles = StyleSheet.create({
   },
   lyricList: {
     gap: Spacing.sm,
+  },
+  statusCard: {
+    gap: 6,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: AppTheme.colors.card,
+    borderWidth: 1,
+    borderColor: AppTheme.colors.border,
+  },
+  statusLabel: {
+    color: AppTheme.colors.text,
+    fontSize: Typography.body,
+    fontWeight: '700',
+  },
+  statusText: {
+    fontSize: Typography.caption,
+    lineHeight: 18,
+  },
+  errorText: {
+    color: '#FCA5A5',
+    fontSize: Typography.caption,
+    lineHeight: 18,
+    fontWeight: '600',
   },
 });

@@ -54,8 +54,9 @@ The project setup is complete, and the first frontend foundation milestone is im
 
 ### Current limitation
 - Audio playback now uses a real streaming audio source through Expo audio
-- Lyrics are still demo data and are not fetched from a lyrics provider yet
-- Real translation and lyrics APIs have not been connected yet
+- Lyrics now pass through a service layer with API-ready fetch and translation functions
+- If no backend URL is configured, the app falls back to local demo lyric data
+- Real third-party lyrics and translation providers are not connected yet
 - Backend work has not started yet
 
 ## Project Structure
@@ -121,6 +122,16 @@ Run for web:
 npm run web
 ```
 
+### Optional API connection
+
+When you start building the backend, set this environment variable so the frontend service layer can call it:
+
+```bash
+EXPO_PUBLIC_API_BASE_URL=http://YOUR_LOCAL_IP:3000
+```
+
+Without this value, the app uses local fallback lyric and translation data so development can continue.
+
 ## Development Log
 
 ### Milestone 1: App foundation
@@ -151,11 +162,26 @@ Why this was done:
 - to make lyric syncing depend on actual playback time instead of a timer
 - to prepare the app for real lyrics and translation APIs in the next step
 
+### Milestone 3: Lyrics and translation service layer
+
+Implemented:
+- added a lyrics fetch service
+- added a lyrics translation service
+- moved the player state to use fetched lyrics instead of reading directly from song objects
+- added loading, ready, and error states for lyrics and translation
+- made the app fallback to local multilingual lyrics when a backend URL is not configured
+
+Why this was done:
+- to prepare the frontend for a real backend without blocking learning progress
+- to separate UI code from lyrics and translation logic
+- to make the next backend/API milestone much easier to plug in
+- to keep the player usable even before external APIs are connected
+
 ### Next planned milestone
 
-- fetch timed lyrics from a real lyrics provider
-- connect translated lyrics to a real translation API
-- keep translated lyrics synced with live playback time
+- create backend routes for lyrics and translation
+- connect the frontend service layer to those backend endpoints
+- add user authentication and protected music data flow
 
 ## GitHub Workflow Note
 

@@ -2,12 +2,18 @@ import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-au
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { mockSongs } from '@/data/mock-songs';
-import { Song, SupportedLanguage } from '@/types/music';
+import { fetchTimedLyrics } from '@/services/lyrics';
+import { translateLyrics } from '@/services/translation';
+import { LyricLine, LyricsLoadState, Song, SupportedLanguage } from '@/types/music';
 
 type AppStateValue = {
   songs: Song[];
   currentSong: Song;
   currentSongIndex: number;
+  lyrics: LyricLine[];
+  lyricsState: LyricsLoadState;
+  translationState: LyricsLoadState;
+  lyricsError: string | null;
   selectedLanguage: SupportedLanguage;
   progressMs: number;
   durationMs: number;
@@ -24,8 +30,8 @@ type AppStateValue = {
 
 const AppStateContext = createContext<AppStateValue | null>(null);
 
-function getActiveLyricIndex(song: Song, progressMs: number) {
-  return song.lyrics.findLastIndex((line) => line.timestampMs <= progressMs);
+function getActiveLyricIndex(lyrics: LyricLine[], progressMs: number) {
+  return lyrics.findLastIndex((line) => line.timestampMs <= progressMs);
 }
 
 export function AppProvider({ children }: React.PropsWithChildren) {
@@ -33,6 +39,11 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('english');
   const [shouldAutoPlay, setShouldAutoPlay] = useState(true);
+  const [baseLyrics, setBaseLyrics] = useState<LyricLine[]>(songs[0]?.lyrics ?? []);
+  const [lyrics, setLyrics] = useState<LyricLine[]>(songs[0]?.lyrics ?? []);
+  const [lyricsState, setLyricsState] = useState<LyricsLoadState>('idle');
+  const [translationState, setTranslationState] = useState<LyricsLoadState>('idle');
+  const [lyricsError, setLyricsError] = useState<string | null>(null);
 
   const currentSong = songs[currentSongIndex] ?? songs[0];
   const player = useAudioPlayer(currentSong.audioSource, {
@@ -67,6 +78,81 @@ export function AppProvider({ children }: React.PropsWithChildren) {
       setShouldAutoPlay(true);
     }
   }, [songs.length, status.didJustFinish]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadLyrics() {
+      setLyricsState('loading');
+      setTranslationState(selectedLanguage === 'english' ? 'loading' : 'idle');
+      setLyricsError(null);
+
+      try {
+        const fetchedLyrics = await fetchTimedLyrics(currentSong.id);
+
+        if (isCancelled) {
+          return;
+        }
+
+        setBaseLyrics(fetchedLyrics);
+        setLyricsState('ready');
+      } catch (error) {
+        if (isCancelled) {
+          return;
+        }
+
+        const message = error instanceof Error ? error.message : 'Unable to load lyrics';
+        setLyricsError(message);
+        setLyricsState('error');
+        setBaseLyrics(currentSong.lyrics);
+      }
+    }
+
+    loadLyrics();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentSong.id, currentSong.lyrics, selectedLanguage]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadTranslatedLyrics() {
+      if (lyricsState !== 'ready') {
+        return;
+      }
+
+      setTranslationState('loading');
+
+      try {
+        const translatedLyrics = await translateLyrics(baseLyrics, selectedLanguage);
+
+        if (isCancelled) {
+          return;
+        }
+
+        setLyrics(translatedLyrics);
+        setTranslationState('ready');
+      } catch (error) {
+        if (isCancelled) {
+          return;
+        }
+
+        const message =
+          error instanceof Error ? error.message : 'Unable to translate lyrics right now';
+        setLyricsError(message);
+        setLyrics(baseLyrics);
+        setTranslationState('error');
+      }
+    }
+
+    loadTranslatedLyrics();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [baseLyrics, lyricsState, selectedLanguage]);
 
   const setSongById = useCallback(
     (songId: string) => {
@@ -118,12 +204,16 @@ export function AppProvider({ children }: React.PropsWithChildren) {
       : currentSong.durationMs;
 
   const value = useMemo<AppStateValue>(() => {
-    const activeLyricIndex = Math.max(getActiveLyricIndex(currentSong, progressMs), 0);
+    const activeLyricIndex = Math.max(getActiveLyricIndex(lyrics, progressMs), 0);
 
     return {
       songs,
       currentSong,
       currentSongIndex,
+      lyrics,
+      lyricsState,
+      translationState,
+      lyricsError,
       selectedLanguage,
       progressMs,
       durationMs,
@@ -141,6 +231,9 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     currentSong,
     currentSongIndex,
     durationMs,
+    lyrics,
+    lyricsError,
+    lyricsState,
     playNext,
     playPrevious,
     progressMs,
@@ -152,6 +245,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     status.isBuffering,
     status.playing,
     togglePlayback,
+    translationState,
   ]);
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
