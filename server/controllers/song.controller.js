@@ -66,6 +66,27 @@ async function searchSongs(req, res, next) {
   }
 }
 
+async function streamTrack(req, res, next) {
+  const { trackId } = req.params;
+
+  if (!trackId) {
+    return res.status(400).json({ message: 'trackId parameter is required' });
+  }
+
+  try {
+    const streamUrl = await audiusService.getTrackStreamUrl(trackId);
+    return res.redirect(streamUrl);
+  } catch (error) {
+    if (!process.env.AUDIUS_API_BEARER_TOKEN) {
+      return res.status(400).json({
+        message: 'Audius token not configured. Track streaming is unavailable.',
+      });
+    }
+
+    return next(error);
+  }
+}
+
 function getLyrics(req, res) {
   const { songId } = req.query;
 
@@ -104,6 +125,7 @@ module.exports = {
   getSongs,
   getTrendingSongs,
   searchSongs,
+  streamTrack,
   getLyrics,
   translateLyrics,
 };

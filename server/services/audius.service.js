@@ -24,6 +24,7 @@ function mapAudiusTrackToSong(track, index) {
     artist: track.user?.name ?? 'Unknown Artist',
     album: track.genre || 'Audius Discovery',
     audioAssetKey: selectAudioAssetKey(index),
+    streamPath: `/api/tracks/${track.id}/stream`,
     durationMs: Math.round((track.duration || 30) * 1000),
     coverColor: index % 2 === 0 ? '#17312A' : '#11283A',
     accentColor: index % 2 === 0 ? '#1ED760' : '#5FD1FF',
@@ -62,6 +63,32 @@ async function fetchFromAudius(pathname, searchParams = {}) {
   return Array.isArray(data?.data) ? data.data : [];
 }
 
+async function getTrackStreamUrl(trackId) {
+  const url = new URL(`${AUDIUS_API_BASE_URL}/tracks/${trackId}/stream`);
+  url.searchParams.set('no_redirect', 'true');
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/json',
+      ...getAudiusHeaders(),
+    },
+    redirect: 'follow',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Audius stream request failed with status ${response.status}`);
+  }
+
+  const data = await response.json();
+  const streamUrl = data?.data ?? data?.url;
+
+  if (!streamUrl) {
+    throw new Error('Audius stream URL was not returned');
+  }
+
+  return streamUrl;
+}
+
 async function getTrendingSongs() {
   const tracks = await fetchFromAudius('/tracks/trending', {
     limit: 12,
@@ -83,4 +110,5 @@ async function searchSongs(query) {
 module.exports = {
   getTrendingSongs,
   searchSongs,
+  getTrackStreamUrl,
 };

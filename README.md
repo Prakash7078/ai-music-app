@@ -53,6 +53,12 @@ Start the backend with:
 npm run server
 ```
 
+Copy the example env file before starting real API integration:
+
+```bash
+cp .env.example .env
+```
+
 ## Current Progress
 
 The project setup is complete, and the first frontend foundation milestone is implemented.
@@ -250,6 +256,20 @@ Why this was done:
 - to start pulling songs from a real music catalog API
 - to keep the backend architecture clean by isolating third-party API logic in a service
 - to let the frontend grow toward real discovery and search without breaking the learning flow
+
+### Milestone 6: Audius stream playback wiring
+
+Implemented:
+- added backend `.env` loading with `dotenv`
+- added `.env.example`
+- added `/api/tracks/:trackId/stream` to resolve and redirect Audius stream URLs
+- updated frontend song hydration so Audius songs can use backend-provided stream playback
+- fixed the empty-song response case so the UI falls back cleanly instead of staying in loading state
+
+Why this was done:
+- to let Audius songs become playable in the frontend player
+- to make local setup clearer for both Expo and backend env values
+- to improve debugging when the backend returns no songs
 
 ### Next planned milestone
 

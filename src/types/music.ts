@@ -16,6 +16,7 @@ export type Song = {
   album: string;
   audioAssetKey: string;
   audioSource: string | number;
+  streamPath?: string;
   durationMs: number;
   coverColor: string;
   accentColor: string;

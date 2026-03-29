@@ -75,7 +75,14 @@ export function AppProvider({ children }: React.PropsWithChildren) {
       try {
         const fetchedSongs = await fetchSongs();
 
-        if (isCancelled || fetchedSongs.length === 0) {
+        if (isCancelled) {
+          return;
+        }
+
+        if (fetchedSongs.length === 0) {
+          setSongsError('No songs were returned by the backend. Using local fallback songs.');
+          setSongsState('error');
+          setSongs(mockSongs);
           return;
         }
 

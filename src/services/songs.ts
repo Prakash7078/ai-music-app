@@ -11,9 +11,11 @@ type SongsResponse = {
 };
 
 function hydrateSong(song: SongApiRecord): Song {
+  const remoteAudioSource = song.streamPath ? buildApiUrl(song.streamPath) : null;
+
   return {
     ...song,
-    audioSource: resolveAudioSource(song.audioAssetKey),
+    audioSource: remoteAudioSource ?? resolveAudioSource(song.audioAssetKey),
   };
 }
 
