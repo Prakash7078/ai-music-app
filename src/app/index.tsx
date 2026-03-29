@@ -33,14 +33,24 @@ export default function HomeScreen() {
   } = useAppState();
 
   const isSearching = Boolean(searchQuery.trim());
+  const connectionTitle =
+    songsState === 'loading' || artistsState === 'loading'
+      ? 'Connecting to your music backend'
+      : songsError || artistsError
+        ? 'Using fallback data while the backend catches up'
+        : 'Backend connected and ready';
+  const connectionMessage =
+    songsError || artistsError
+      ? songsError || artistsError || 'The app is temporarily showing fallback content.'
+      : `API target: ${API_BASE_URL}`;
 
   return (
     <ScreenContainer>
       <View style={styles.heroCard}>
         <SectionHeader
           eyebrow="AI Music App"
-          title="Build your Spotify-style streaming app"
-          subtitle="We’ve replaced the starter template with a real app foundation. This first step gives you navigation, shared state, multilingual lyric data, and a player screen to extend next."
+          title="Play music, explore artists, and build as you learn"
+          subtitle="This app now supports backend-driven songs, Audius search, shared playback state, and a player screen you can keep expanding step by step."
         />
 
         <View style={styles.heroFooter}>
@@ -79,39 +89,13 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <View style={styles.section}>
-        <SectionHeader
-          eyebrow="Backend"
-          title={isSearching ? 'Search-backed songs API' : 'Songs from backend API'}
-          subtitle={
-            isSearching
-              ? 'These results come from your backend search routes when the API base URL is configured.'
-              : 'The frontend now supports fetching songs from Express. Without a backend URL, it keeps using local fallback data so development stays smooth.'
-          }
-        />
-        <View style={styles.noteCard}>
-          <ThemedText style={styles.noteTitle}>Songs API status</ThemedText>
-          <ThemedText style={styles.noteText} themeColor="textSecondary">
-            API base URL: {API_BASE_URL || 'not set'}
+      <View style={styles.connectionBanner}>
+        <View style={styles.connectionDot} />
+        <View style={styles.connectionContent}>
+          <ThemedText style={styles.connectionTitle}>{connectionTitle}</ThemedText>
+          <ThemedText style={styles.connectionText} themeColor="textSecondary">
+            {connectionMessage}
           </ThemedText>
-          <ThemedText style={styles.noteText} themeColor="textSecondary">
-            Songs in memory: {songs.length}
-          </ThemedText>
-          <ThemedText style={styles.noteText} themeColor="textSecondary">
-            {songsState === 'loading'
-              ? 'Loading songs from the backend...'
-              : songsState === 'error'
-                ? 'Backend fetch failed. Falling back to local songs.'
-                : 'Songs are ready.'}
-          </ThemedText>
-          {songs[0] ? (
-            <ThemedText style={styles.noteText} themeColor="textSecondary">
-              First song: {songs[0].title}
-            </ThemedText>
-          ) : null}
-          {songsError ? (
-            <ThemedText style={styles.apiErrorText}>{songsError}</ThemedText>
-          ) : null}
         </View>
       </View>
 
@@ -122,27 +106,9 @@ export default function HomeScreen() {
           subtitle={
             isSearching
               ? 'Artist results update from the backend as your search query changes.'
-              : 'This section now fetches artist/user data from the backend so you can confirm Audius data is reaching the UI.'
+              : 'Featured artist profiles loaded from your backend response.'
           }
         />
-        <View style={styles.noteCard}>
-          <ThemedText style={styles.noteTitle}>Users API status</ThemedText>
-          <ThemedText style={styles.noteText} themeColor="textSecondary">
-            Users in memory: {artists.length}
-          </ThemedText>
-          <ThemedText style={styles.noteText} themeColor="textSecondary">
-            {artistsState === 'loading'
-              ? 'Loading users from the backend...'
-              : artistsState === 'error'
-                ? 'Users request failed.'
-                : artists.length > 0
-                  ? 'Users are ready.'
-                  : 'No users returned yet.'}
-          </ThemedText>
-          {artistsError ? (
-            <ThemedText style={styles.apiErrorText}>{artistsError}</ThemedText>
-          ) : null}
-        </View>
 
         <View style={styles.songList}>
           {artists.length > 0 ? (
@@ -163,7 +129,7 @@ export default function HomeScreen() {
         <SectionHeader
           eyebrow="Translation"
           title="Preferred lyric language"
-          subtitle="The app now plays real streaming audio. Lyrics are still demo content for now, and the next step is replacing translations with a real API."
+          subtitle="Change the language now and later we can connect it to a real lyrics translation provider."
         />
         <LanguageSelector value={selectedLanguage} onChange={selectLanguage} />
       </View>
@@ -207,10 +173,10 @@ export default function HomeScreen() {
       <View style={styles.noteCard}>
         <ThemedText style={styles.noteTitle}>How this maps to your learning flow</ThemedText>
         <ThemedText style={styles.noteText} themeColor="textSecondary">
-          Frontend: screens, reusable components, shared state, design system, and real audio playback.
+          Frontend: screens, reusable components, shared state, design system, search, and real audio playback.
         </ThemedText>
         <ThemedText style={styles.noteText} themeColor="textSecondary">
-          Backend next: auth routes, song APIs, lyrics API proxy, translation controller, and DB models.
+          Backend next: auth routes, richer Audius mapping, lyrics API proxy, translation controller, and DB models.
         </ThemedText>
       </View>
     </ScreenContainer>
@@ -258,6 +224,36 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: Spacing.md,
+  },
+  connectionBanner: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    alignItems: 'center',
+    backgroundColor: '#0C1425',
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderWidth: 1,
+    borderColor: AppTheme.colors.border,
+  },
+  connectionDot: {
+    width: 12,
+    height: 12,
+    borderRadius: Radius.round,
+    backgroundColor: AppTheme.colors.primary,
+  },
+  connectionContent: {
+    flex: 1,
+    gap: 4,
+  },
+  connectionTitle: {
+    color: AppTheme.colors.text,
+    fontSize: Typography.body,
+    fontWeight: '700',
+  },
+  connectionText: {
+    fontSize: Typography.caption,
+    lineHeight: 18,
   },
   songList: {
     gap: Spacing.md,

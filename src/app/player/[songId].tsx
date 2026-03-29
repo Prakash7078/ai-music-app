@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -53,6 +54,9 @@ export default function PlayerScreen() {
         </Pressable>
 
         <View style={styles.coverContent}>
+          {currentSong.artworkUrl ? (
+            <Image source={currentSong.artworkUrl} style={styles.coverImage} contentFit="cover" />
+          ) : null}
           <ThemedText style={styles.albumLabel}>{currentSong.album}</ThemedText>
           <ThemedText style={styles.songTitle}>{currentSong.title}</ThemedText>
           <ThemedText style={styles.artistName}>{currentSong.artist}</ThemedText>
@@ -155,6 +159,13 @@ const styles = StyleSheet.create({
   },
   coverContent: {
     gap: 8,
+  },
+  coverImage: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: Radius.lg,
+    backgroundColor: 'rgba(15, 23, 42, 0.2)',
+    marginBottom: Spacing.md,
   },
   albumLabel: {
     color: 'rgba(248, 250, 252, 0.75)',

@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -12,11 +13,15 @@ type ArtistCardProps = {
 export function ArtistCard({ artist }: ArtistCardProps) {
   return (
     <View style={styles.card}>
-      <View style={styles.avatar}>
-        <ThemedText style={styles.avatarLabel}>
-          {artist.name.slice(0, 1).toUpperCase()}
-        </ThemedText>
-      </View>
+      {artist.avatarUrl ? (
+        <Image source={artist.avatarUrl} style={styles.avatarImage} contentFit="cover" />
+      ) : (
+        <View style={styles.avatar}>
+          <ThemedText style={styles.avatarLabel}>
+            {artist.name.slice(0, 1).toUpperCase()}
+          </ThemedText>
+        </View>
+      )}
 
       <View style={styles.content}>
         <View style={styles.headerRow}>
@@ -50,6 +55,12 @@ const styles = StyleSheet.create({
     borderRadius: Radius.round,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#22311A',
+  },
+  avatarImage: {
+    width: 52,
+    height: 52,
+    borderRadius: Radius.round,
     backgroundColor: '#22311A',
   },
   avatarLabel: {

@@ -57,14 +57,19 @@ export async function searchSongs(query: string): Promise<Song[]> {
   const endpoint = buildApiUrl(`/api/search?q=${encodeURIComponent(normalizedQuery)}`);
 
   if (endpoint) {
-    const response = await fetch(endpoint);
+    try {
+      const response = await fetch(endpoint);
 
-    if (!response.ok) {
-      throw new Error(`Song search failed with status ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`Song search failed with status ${response.status}`);
+      }
+
+      const data = (await response.json()) as SongsResponse;
+      return data.songs.map(hydrateSong);
+    } catch {
+      await wait(200);
+      return filterLocalSongs(normalizedQuery);
     }
-
-    const data = (await response.json()) as SongsResponse;
-    return data.songs.map(hydrateSong);
   }
 
   await wait(200);

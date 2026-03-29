@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -21,9 +22,13 @@ export function SongCard({ song, isActive, onPress }: SongCardProps) {
         { backgroundColor: isActive ? AppTheme.colors.cardActive : AppTheme.colors.card },
         pressed && styles.cardPressed,
       ]}>
-      <View style={[styles.cover, { backgroundColor: song.coverColor }]}>
-        <ThemedText style={styles.coverText}>{song.album}</ThemedText>
-      </View>
+      {song.artworkUrl ? (
+        <Image source={song.artworkUrl} style={styles.coverImage} contentFit="cover" />
+      ) : (
+        <View style={[styles.cover, { backgroundColor: song.coverColor }]}>
+          <ThemedText style={styles.coverText}>{song.album}</ThemedText>
+        </View>
+      )}
 
       <View style={styles.content}>
         <View style={styles.headerRow}>
@@ -63,6 +68,12 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     justifyContent: 'flex-end',
     padding: Spacing.sm,
+  },
+  coverImage: {
+    width: 76,
+    height: 76,
+    borderRadius: Radius.md,
+    backgroundColor: '#0F172A',
   },
   coverText: {
     color: '#F8FAFC',

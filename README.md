@@ -169,6 +169,8 @@ For Android emulator testing, `10.0.2.2` usually points back to your computer:
 EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:3000
 ```
 
+In development, the frontend now also tries to auto-detect a local backend URL so you can see backend content without manually setting the env var every time. The explicit env var still takes priority when you want to override it.
+
 To use Audius-backed discovery in the backend, add:
 
 ```bash
@@ -311,6 +313,20 @@ Why this was done:
 - to make the app feel more like a real streaming product instead of a static list
 - to practice connecting React Native UI to backend search routes
 - to keep API logic inside shared state and services, matching the preferred learning flow
+
+### Milestone 9: Backend response fixes and UI refresh
+
+Implemented:
+- added local fallback artist generation in the backend model layer
+- changed the backend users endpoints to return fallback artists instead of empty arrays
+- made the frontend auto-detect a local backend URL in development
+- updated song cards, artist cards, and the player screen to render real artwork/avatar images when available
+- simplified the Home screen so songs and artists are the main focus instead of debug panels
+
+Why this was done:
+- to fix the empty artists/users experience when Audius data was unavailable
+- to reduce the chance of the frontend silently staying on default data because of missing env setup
+- to make Audius-backed content actually look like music content in the UI
 
 ### Next planned milestone
 

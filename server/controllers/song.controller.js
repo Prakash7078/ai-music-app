@@ -71,15 +71,15 @@ async function getFeaturedUsers(_req, res, next) {
     const users = await audiusService.getFeaturedUsers();
 
     return res.status(200).json({
-      users,
+      users: users.length > 0 ? users : songModel.getAllArtists(),
       source: users.length > 0 ? 'audius' : 'fallback',
     });
   } catch (error) {
     if (!process.env.AUDIUS_API_BEARER_TOKEN) {
       return res.status(200).json({
-        users: [],
+        users: songModel.getAllArtists(),
         source: 'fallback',
-        message: 'Audius token not configured. No remote users were loaded.',
+        message: 'Audius token not configured. Using local fallback artists.',
       });
     }
 
@@ -98,15 +98,26 @@ async function searchUsers(req, res, next) {
     const users = await audiusService.searchUsers(query);
 
     return res.status(200).json({
-      users,
-      source: 'audius',
+      users:
+        users.length > 0
+          ? users
+          : songModel
+              .getAllArtists()
+              .filter((artist) =>
+                `${artist.name} ${artist.handle}`.toLowerCase().includes(query.toLowerCase())
+              ),
+      source: users.length > 0 ? 'audius' : 'fallback',
     });
   } catch (error) {
     if (!process.env.AUDIUS_API_BEARER_TOKEN) {
       return res.status(200).json({
-        users: [],
+        users: songModel
+          .getAllArtists()
+          .filter((artist) =>
+            `${artist.name} ${artist.handle}`.toLowerCase().includes(query.toLowerCase())
+          ),
         source: 'fallback',
-        message: 'Audius token not configured. No remote users were loaded.',
+        message: 'Audius token not configured. Using local fallback artist search.',
       });
     }
 
