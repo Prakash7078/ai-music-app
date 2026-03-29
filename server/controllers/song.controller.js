@@ -147,19 +147,22 @@ async function streamTrack(req, res, next) {
 }
 
 function getLyrics(req, res) {
-  const { songId } = req.query;
+  const { songId, title, artist, durationMs } = req.query;
 
-  if (!songId) {
-    return res.status(400).json({ message: 'songId query parameter is required' });
+  if (!songId && !title) {
+    return res.status(400).json({ message: 'songId or title query parameter is required' });
   }
 
-  const lyrics = songModel.getSongLyrics(songId);
+  const lyrics = songId ? songModel.getSongLyrics(songId) : null;
 
-  if (!lyrics) {
-    return res.status(404).json({ message: 'Lyrics not found for this song' });
+  if (lyrics && lyrics.length > 0) {
+    return res.status(200).json({ lyrics, source: 'catalog' });
   }
 
-  return res.status(200).json({ lyrics });
+  return res.status(200).json({
+    lyrics: songModel.generateSongLyrics({ songId, title, artist, durationMs }),
+    source: 'generated',
+  });
 }
 
 function translateLyrics(req, res) {

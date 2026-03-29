@@ -4,7 +4,7 @@ import {
   useAudioPlayer,
   useAudioPlayerStatus,
 } from 'expo-audio';
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { mockSongs } from '@/data/mock-songs';
 import { fetchTimedLyrics } from '@/services/lyrics';
@@ -81,17 +81,32 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   const [lyricsState, setLyricsState] = useState<LyricsLoadState>('idle');
   const [translationState, setTranslationState] = useState<LyricsLoadState>('idle');
   const [lyricsError, setLyricsError] = useState<string | null>(null);
+  const [pendingAutoPlay, setPendingAutoPlay] = useState(true);
 
   const visibleSongs = searchQuery.trim() ? searchSongsResults : songs;
   const visibleArtists = searchQuery.trim() ? searchArtistsResults : artists;
   const songCatalog = useMemo(() => mergeSongs(songs, searchSongsResults), [searchSongsResults, songs]);
   const currentSong = songCatalog.find((song) => song.id === currentSongId) ?? songCatalog[0] ?? mockSongs[0];
-  const player = useAudioPlayer(currentSong.audioSource, {
+  const lyricsRequestSong = useMemo(
+    () => ({
+      id: currentSong.id,
+      title: currentSong.title,
+      artist: currentSong.artist,
+      durationMs: currentSong.durationMs,
+      lyrics: currentSong.lyrics,
+    }),
+    [currentSong.artist, currentSong.durationMs, currentSong.id, currentSong.lyrics, currentSong.title]
+  );
+  const shouldAutoPlayRef = useRef(shouldAutoPlay);
+  const player = useAudioPlayer(null, {
     updateInterval: 250,
-    downloadFirst: true,
     preferredForwardBufferDuration: 10,
   });
   const status = useAudioPlayerStatus(player);
+
+  useEffect(() => {
+    shouldAutoPlayRef.current = shouldAutoPlay;
+  }, [shouldAutoPlay]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -240,10 +255,17 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   }, []);
 
   useEffect(() => {
-    if (status.isLoaded && shouldAutoPlay) {
+    if (status.isLoaded && pendingAutoPlay) {
       player.play();
+      setPendingAutoPlay(false);
     }
-  }, [player, shouldAutoPlay, status.isLoaded]);
+  }, [pendingAutoPlay, player, status.isLoaded]);
+
+  useEffect(() => {
+    player.pause();
+    player.replace(currentSong.audioSource);
+    setPendingAutoPlay(shouldAutoPlayRef.current);
+  }, [currentSong.audioSource, currentSong.id, player]);
 
   useEffect(() => {
     if (status.didJustFinish) {
@@ -263,11 +285,13 @@ export function AppProvider({ children }: React.PropsWithChildren) {
 
     async function loadLyrics() {
       setLyricsState('loading');
-      setTranslationState(selectedLanguage === 'english' ? 'loading' : 'idle');
+      setTranslationState('idle');
       setLyricsError(null);
+      setBaseLyrics([]);
+      setLyrics([]);
 
       try {
-        const fetchedLyrics = await fetchTimedLyrics(currentSong.id);
+        const fetchedLyrics = await fetchTimedLyrics(lyricsRequestSong);
 
         if (isCancelled) {
           return;
@@ -281,9 +305,16 @@ export function AppProvider({ children }: React.PropsWithChildren) {
         }
 
         const message = error instanceof Error ? error.message : 'Unable to load lyrics';
+        if (lyricsRequestSong.lyrics.length > 0) {
+          setBaseLyrics(lyricsRequestSong.lyrics);
+          setLyricsState('ready');
+          setLyricsError(message);
+          return;
+        }
+
         setLyricsError(message);
         setLyricsState('error');
-        setBaseLyrics(currentSong.lyrics);
+        setBaseLyrics([]);
       }
     }
 
@@ -292,7 +323,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     return () => {
       isCancelled = true;
     };
-  }, [currentSong.id, currentSong.lyrics, selectedLanguage]);
+  }, [lyricsRequestSong]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -355,12 +386,19 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     if (status.playing) {
       player.pause();
       setShouldAutoPlay(false);
+      setPendingAutoPlay(false);
       return;
     }
 
-    player.play();
     setShouldAutoPlay(true);
-  }, [player, status.playing]);
+    if (status.isLoaded) {
+      player.play();
+      setPendingAutoPlay(false);
+      return;
+    }
+
+    setPendingAutoPlay(true);
+  }, [player, status.isLoaded, status.playing]);
 
   const playNext = useCallback(() => {
     if (songCatalog.length === 0) {

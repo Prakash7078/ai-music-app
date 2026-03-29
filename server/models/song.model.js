@@ -1,5 +1,25 @@
 const { songs } = require('../data/song.data');
 
+const SUPPORTED_LANGUAGES = ['english', 'hindi', 'telugu', 'spanish'];
+
+function createTranslations(line) {
+  return SUPPORTED_LANGUAGES.reduce((translations, language) => {
+    translations[language] = line;
+    return translations;
+  }, {});
+}
+
+function buildGeneratedLines(title, artist) {
+  return [
+    `${title} opens softly as the rhythm finds its place.`,
+    `${artist} carries the melody forward through the next phrase.`,
+    `Each beat from ${title} lands in time with the chorus.`,
+    `The groove builds while the room moves with ${artist}.`,
+    `This section keeps the energy high and the vocals close.`,
+    `${title} fades out with ${artist} still echoing in the mix.`,
+  ];
+}
+
 function getAllSongs() {
   return songs;
 }
@@ -41,9 +61,26 @@ function getSongLyrics(songId) {
   return song ? song.lyrics : null;
 }
 
+function generateSongLyrics({ songId, title, artist, durationMs }) {
+  const song = songId ? getSongById(songId) : null;
+  const resolvedTitle = title || song?.title || 'This track';
+  const resolvedArtist = artist || song?.artist || 'The artist';
+  const resolvedDurationMs = Math.max(Number(durationMs) || song?.durationMs || 180000, 90000);
+  const generatedLines = buildGeneratedLines(resolvedTitle, resolvedArtist);
+  const step = Math.max(Math.floor(resolvedDurationMs / (generatedLines.length + 1)), 12000);
+
+  return generatedLines.map((line, index) => ({
+    id: `${songId || resolvedTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-generated-${index + 1}`,
+    timestampMs: index * step,
+    original: line,
+    translations: createTranslations(line),
+  }));
+}
+
 module.exports = {
   getAllSongs,
   getAllArtists,
   getSongById,
   getSongLyrics,
+  generateSongLyrics,
 };

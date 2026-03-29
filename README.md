@@ -328,6 +328,19 @@ Why this was done:
 - to reduce the chance of the frontend silently staying on default data because of missing env setup
 - to make Audius-backed content actually look like music content in the UI
 
+### Milestone 10: Lyrics fallback and playback handoff fixes
+
+Implemented:
+- updated the backend lyrics route so it generates timed fallback lyrics for songs that do not already have stored lyrics
+- updated the frontend lyrics service to send song metadata to the backend instead of only a song ID
+- changed the shared audio player flow to explicitly replace the source when the current song changes
+- fixed next and previous controls so the old track stops and the new track starts from the beginning
+
+Why this was done:
+- to prevent remote songs from showing an empty lyrics section
+- to make playback controls feel like a real streaming app instead of keeping the previous source active
+- to keep the player usable even before a real third-party lyrics provider is connected
+
 ### Next planned milestone
 
 - add authentication routes and middleware
