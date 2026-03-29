@@ -176,6 +176,18 @@ AUDIUS_API_BEARER_TOKEN=your_audius_bearer_token
 
 Without this token, the backend falls back to local demo songs.
 
+### Frontend API debug panel
+
+The Home screen now shows a small API debug card so you can quickly verify what the app is doing at runtime.
+
+Important values:
+- `API base URL: not set` means Expo was started without `EXPO_PUBLIC_API_BASE_URL`, so the frontend is not calling your backend at all
+- `Songs in memory` shows how many songs the shared frontend state currently has
+- `Users in memory` shows how many Audius users reached the frontend
+- `First song` helps confirm whether real data was loaded or only fallback data is present
+
+If you change `.env`, fully restart Expo so the new `EXPO_PUBLIC_*` value is picked up.
+
 ## Development Log
 
 ### Milestone 1: App foundation
@@ -273,6 +285,17 @@ Why this was done:
 - to let Audius songs become playable in the frontend player
 - to make local setup clearer for both Expo and backend env values
 - to improve debugging when the backend returns no songs
+
+### Milestone 7: Frontend API visibility debugging
+
+Implemented:
+- added Home screen debug output for API base URL
+- added song and user counts directly in the UI
+- surfaced the first loaded song title in the UI for quick verification
+
+Why this was done:
+- to stop guessing whether the frontend is using Audius, fallback data, or no backend at all
+- to make debugging Expo env values much easier during development
 
 ### Next planned milestone
 

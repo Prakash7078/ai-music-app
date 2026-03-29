@@ -7,6 +7,7 @@ import { LanguageSelector } from '@/components/language-selector';
 import { ScreenContainer } from '@/components/screen-container';
 import { SectionHeader } from '@/components/section-header';
 import { SongCard } from '@/components/song-card';
+import { API_BASE_URL } from '@/config/api';
 import { AppTheme, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAppState } from '@/context/app-state';
 import { ThemedText } from '@/components/themed-text';
@@ -58,12 +59,23 @@ export default function HomeScreen() {
         <View style={styles.noteCard}>
           <ThemedText style={styles.noteTitle}>Songs API status</ThemedText>
           <ThemedText style={styles.noteText} themeColor="textSecondary">
+            API base URL: {API_BASE_URL || 'not set'}
+          </ThemedText>
+          <ThemedText style={styles.noteText} themeColor="textSecondary">
+            Songs in memory: {songs.length}
+          </ThemedText>
+          <ThemedText style={styles.noteText} themeColor="textSecondary">
             {songsState === 'loading'
               ? 'Loading songs from the backend...'
               : songsState === 'error'
                 ? 'Backend fetch failed. Falling back to local songs.'
                 : 'Songs are ready.'}
           </ThemedText>
+          {songs[0] ? (
+            <ThemedText style={styles.noteText} themeColor="textSecondary">
+              First song: {songs[0].title}
+            </ThemedText>
+          ) : null}
           {songsError ? (
             <ThemedText style={styles.apiErrorText}>{songsError}</ThemedText>
           ) : null}
@@ -78,6 +90,9 @@ export default function HomeScreen() {
         />
         <View style={styles.noteCard}>
           <ThemedText style={styles.noteTitle}>Users API status</ThemedText>
+          <ThemedText style={styles.noteText} themeColor="textSecondary">
+            Users in memory: {artists.length}
+          </ThemedText>
           <ThemedText style={styles.noteText} themeColor="textSecondary">
             {artistsState === 'loading'
               ? 'Loading users from the backend...'
