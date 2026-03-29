@@ -6,7 +6,9 @@ const router = express.Router();
 
 router.get('/songs', songController.getSongs);
 router.get('/discover/trending', songController.getTrendingSongs);
+router.get('/discover/users', songController.getFeaturedUsers);
 router.get('/search', songController.searchSongs);
+router.get('/users/search', songController.searchUsers);
 router.get('/tracks/:trackId/stream', songController.streamTrack);
 router.get('/lyrics', songController.getLyrics);
 router.post('/translate-lyrics', songController.translateLyrics);

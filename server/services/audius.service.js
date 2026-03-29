@@ -39,6 +39,24 @@ function mapAudiusTrackToSong(track, index) {
   };
 }
 
+function mapAudiusUser(user) {
+  return {
+    id: `audius-user-${user.id}`,
+    name: user.name ?? 'Unknown Artist',
+    handle: user.handle ?? 'unknown',
+    bio: user.bio ?? '',
+    avatarUrl:
+      user.profile_picture?.['480x480'] ||
+      user.profile_picture?.['150x150'] ||
+      user.profile_picture?.['1000x1000'],
+    followerCount: user.follower_count ?? 0,
+    trackCount: user.track_count ?? 0,
+    isVerified: Boolean(user.is_verified),
+    sourceProvider: 'Audius',
+    externalUrl: user.permalink ? `https://audius.co${user.permalink}` : undefined,
+  };
+}
+
 async function fetchFromAudius(pathname, searchParams = {}) {
   const url = new URL(`${AUDIUS_API_BASE_URL}${pathname}`);
 
@@ -107,8 +125,38 @@ async function searchSongs(query) {
   return tracks.map(mapAudiusTrackToSong);
 }
 
+async function getFeaturedUsers() {
+  const tracks = await fetchFromAudius('/tracks/trending', {
+    limit: 12,
+    time: 'week',
+  });
+
+  const seen = new Set();
+  const users = [];
+
+  for (const track of tracks) {
+    if (track.user?.id && !seen.has(track.user.id)) {
+      seen.add(track.user.id);
+      users.push(mapAudiusUser(track.user));
+    }
+  }
+
+  return users;
+}
+
+async function searchUsers(query) {
+  const users = await fetchFromAudius('/users/search', {
+    query,
+    limit: 12,
+  });
+
+  return users.map(mapAudiusUser);
+}
+
 module.exports = {
   getTrendingSongs,
   searchSongs,
+  getFeaturedUsers,
+  searchUsers,
   getTrackStreamUrl,
 };

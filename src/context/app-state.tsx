@@ -10,12 +10,16 @@ import { mockSongs } from '@/data/mock-songs';
 import { fetchTimedLyrics } from '@/services/lyrics';
 import { fetchSongs } from '@/services/songs';
 import { translateLyrics } from '@/services/translation';
-import { LyricLine, LyricsLoadState, Song, SupportedLanguage } from '@/types/music';
+import { fetchFeaturedUsers } from '@/services/users';
+import { ArtistProfile, LyricLine, LyricsLoadState, Song, SupportedLanguage } from '@/types/music';
 
 type AppStateValue = {
   songs: Song[];
   songsState: LyricsLoadState;
   songsError: string | null;
+  artists: ArtistProfile[];
+  artistsState: LyricsLoadState;
+  artistsError: string | null;
   currentSong: Song;
   currentSongIndex: number;
   lyrics: LyricLine[];
@@ -48,6 +52,9 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   const [songs, setSongs] = useState<Song[]>(mockSongs);
   const [songsState, setSongsState] = useState<LyricsLoadState>('idle');
   const [songsError, setSongsError] = useState<string | null>(null);
+  const [artists, setArtists] = useState<ArtistProfile[]>([]);
+  const [artistsState, setArtistsState] = useState<LyricsLoadState>('idle');
+  const [artistsError, setArtistsError] = useState<string | null>(null);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('english');
   const [shouldAutoPlay, setShouldAutoPlay] = useState(true);
@@ -101,6 +108,41 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     }
 
     loadSongs();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadArtists() {
+      setArtistsState('loading');
+      setArtistsError(null);
+
+      try {
+        const fetchedArtists = await fetchFeaturedUsers();
+
+        if (isCancelled) {
+          return;
+        }
+
+        setArtists(fetchedArtists);
+        setArtistsState('ready');
+      } catch (error) {
+        if (isCancelled) {
+          return;
+        }
+
+        const message = error instanceof Error ? error.message : 'Unable to load users';
+        setArtistsError(message);
+        setArtistsState('error');
+        setArtists([]);
+      }
+    }
+
+    loadArtists();
 
     return () => {
       isCancelled = true;
@@ -272,6 +314,9 @@ export function AppProvider({ children }: React.PropsWithChildren) {
       songs,
       songsState,
       songsError,
+      artists,
+      artistsState,
+      artistsError,
       currentSong,
       currentSongIndex,
       lyrics,
@@ -308,6 +353,9 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     selectedLanguage,
     setSongById,
     songs,
+    artists,
+    artistsError,
+    artistsState,
     songsError,
     songsState,
     status.isBuffering,

@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { ArtistCard } from '@/components/artist-card';
 import { LanguageSelector } from '@/components/language-selector';
 import { ScreenContainer } from '@/components/screen-container';
 import { SectionHeader } from '@/components/section-header';
@@ -16,6 +17,9 @@ export default function HomeScreen() {
     songs,
     songsState,
     songsError,
+    artists,
+    artistsState,
+    artistsError,
     currentSong,
     selectedLanguage,
     selectLanguage,
@@ -63,6 +67,35 @@ export default function HomeScreen() {
           {songsError ? (
             <ThemedText style={styles.apiErrorText}>{songsError}</ThemedText>
           ) : null}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <SectionHeader
+          eyebrow="Artists"
+          title="Audius users on frontend"
+          subtitle="This section now fetches artist/user data from the backend so you can confirm Audius data is reaching the UI."
+        />
+        <View style={styles.noteCard}>
+          <ThemedText style={styles.noteTitle}>Users API status</ThemedText>
+          <ThemedText style={styles.noteText} themeColor="textSecondary">
+            {artistsState === 'loading'
+              ? 'Loading users from the backend...'
+              : artistsState === 'error'
+                ? 'Users request failed.'
+                : artists.length > 0
+                  ? 'Users are ready.'
+                  : 'No users returned yet.'}
+          </ThemedText>
+          {artistsError ? (
+            <ThemedText style={styles.apiErrorText}>{artistsError}</ThemedText>
+          ) : null}
+        </View>
+
+        <View style={styles.songList}>
+          {artists.map((artist) => (
+            <ArtistCard key={artist.id} artist={artist} />
+          ))}
         </View>
       </View>
 

@@ -66,6 +66,54 @@ async function searchSongs(req, res, next) {
   }
 }
 
+async function getFeaturedUsers(_req, res, next) {
+  try {
+    const users = await audiusService.getFeaturedUsers();
+
+    return res.status(200).json({
+      users,
+      source: users.length > 0 ? 'audius' : 'fallback',
+    });
+  } catch (error) {
+    if (!process.env.AUDIUS_API_BEARER_TOKEN) {
+      return res.status(200).json({
+        users: [],
+        source: 'fallback',
+        message: 'Audius token not configured. No remote users were loaded.',
+      });
+    }
+
+    return next(error);
+  }
+}
+
+async function searchUsers(req, res, next) {
+  const query = req.query.q?.toString().trim();
+
+  if (!query) {
+    return res.status(400).json({ message: 'q query parameter is required' });
+  }
+
+  try {
+    const users = await audiusService.searchUsers(query);
+
+    return res.status(200).json({
+      users,
+      source: 'audius',
+    });
+  } catch (error) {
+    if (!process.env.AUDIUS_API_BEARER_TOKEN) {
+      return res.status(200).json({
+        users: [],
+        source: 'fallback',
+        message: 'Audius token not configured. No remote users were loaded.',
+      });
+    }
+
+    return next(error);
+  }
+}
+
 async function streamTrack(req, res, next) {
   const { trackId } = req.params;
 
@@ -125,6 +173,8 @@ module.exports = {
   getSongs,
   getTrendingSongs,
   searchSongs,
+  getFeaturedUsers,
+  searchUsers,
   streamTrack,
   getLyrics,
   translateLyrics,

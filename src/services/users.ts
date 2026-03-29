@@ -1,0 +1,25 @@
+import { buildApiUrl } from '@/config/api';
+import { ArtistProfile } from '@/types/music';
+
+type UsersResponse = {
+  users: ArtistProfile[];
+  source?: string;
+  message?: string;
+};
+
+export async function fetchFeaturedUsers(): Promise<ArtistProfile[]> {
+  const endpoint = buildApiUrl('/api/discover/users');
+
+  if (!endpoint) {
+    return [];
+  }
+
+  const response = await fetch(endpoint);
+
+  if (!response.ok) {
+    throw new Error(`Users request failed with status ${response.status}`);
+  }
+
+  const data = (await response.json()) as UsersResponse;
+  return data.users;
+}

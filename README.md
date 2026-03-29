@@ -249,6 +249,8 @@ Implemented:
 - added an Audius service in the backend
 - added `/api/discover/trending` for trending songs
 - added `/api/search?q=...` for track search
+- added `/api/discover/users` for frontend user discovery
+- added `/api/users/search?q=...` for user search
 - switched the frontend songs fetch to use the new trending endpoint
 - kept local fallback behavior when the Audius bearer token is not configured
 
@@ -265,6 +267,7 @@ Implemented:
 - added `/api/tracks/:trackId/stream` to resolve and redirect Audius stream URLs
 - updated frontend song hydration so Audius songs can use backend-provided stream playback
 - fixed the empty-song response case so the UI falls back cleanly instead of staying in loading state
+- added a frontend artist/user section so Audius user data is visible on the home screen
 
 Why this was done:
 - to let Audius songs become playable in the frontend player

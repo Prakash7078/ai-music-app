@@ -28,3 +28,16 @@ export type Song = {
 };
 
 export type SongApiRecord = Omit<Song, 'audioSource'>;
+
+export type ArtistProfile = {
+  id: string;
+  name: string;
+  handle: string;
+  bio?: string;
+  avatarUrl?: string;
+  followerCount: number;
+  trackCount: number;
+  isVerified: boolean;
+  sourceProvider?: string;
+  externalUrl?: string;
+};
