@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ArtistCard } from '@/components/artist-card';
 import { LanguageSelector } from '@/components/language-selector';
 import { ScreenContainer } from '@/components/screen-container';
+import { SearchBar } from '@/components/search-bar';
 import { SectionHeader } from '@/components/section-header';
 import { SongCard } from '@/components/song-card';
 import { API_BASE_URL } from '@/config/api';
@@ -21,11 +22,17 @@ export default function HomeScreen() {
     artists,
     artistsState,
     artistsError,
+    searchQuery,
+    searchState,
+    searchError,
     currentSong,
     selectedLanguage,
+    setSearchQuery,
     selectLanguage,
     setSongById,
   } = useAppState();
+
+  const isSearching = Boolean(searchQuery.trim());
 
   return (
     <ScreenContainer>
@@ -52,9 +59,35 @@ export default function HomeScreen() {
 
       <View style={styles.section}>
         <SectionHeader
+          eyebrow="Discovery"
+          title="Search Audius songs and artists"
+          subtitle="This uses your Express backend search routes so you can practice full-stack fetching from React Native."
+        />
+        <SearchBar value={searchQuery} onChange={setSearchQuery} />
+        <View style={styles.noteCard}>
+          <ThemedText style={styles.noteTitle}>Search status</ThemedText>
+          <ThemedText style={styles.noteText} themeColor="textSecondary">
+            {isSearching
+              ? searchState === 'loading'
+                ? `Searching for "${searchQuery}"...`
+                : searchState === 'error'
+                  ? `Search failed for "${searchQuery}".`
+                  : `Showing results for "${searchQuery}".`
+              : 'Type in the search bar to query tracks and users from the backend.'}
+          </ThemedText>
+          {searchError ? <ThemedText style={styles.apiErrorText}>{searchError}</ThemedText> : null}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <SectionHeader
           eyebrow="Backend"
-          title="Songs from backend API"
-          subtitle="The frontend now supports fetching songs from Express. Without a backend URL, it keeps using local fallback data so development stays smooth."
+          title={isSearching ? 'Search-backed songs API' : 'Songs from backend API'}
+          subtitle={
+            isSearching
+              ? 'These results come from your backend search routes when the API base URL is configured.'
+              : 'The frontend now supports fetching songs from Express. Without a backend URL, it keeps using local fallback data so development stays smooth.'
+          }
         />
         <View style={styles.noteCard}>
           <ThemedText style={styles.noteTitle}>Songs API status</ThemedText>
@@ -85,8 +118,12 @@ export default function HomeScreen() {
       <View style={styles.section}>
         <SectionHeader
           eyebrow="Artists"
-          title="Audius users on frontend"
-          subtitle="This section now fetches artist/user data from the backend so you can confirm Audius data is reaching the UI."
+          title={isSearching ? 'Matched Audius users' : 'Audius users on frontend'}
+          subtitle={
+            isSearching
+              ? 'Artist results update from the backend as your search query changes.'
+              : 'This section now fetches artist/user data from the backend so you can confirm Audius data is reaching the UI.'
+          }
         />
         <View style={styles.noteCard}>
           <ThemedText style={styles.noteTitle}>Users API status</ThemedText>
@@ -108,9 +145,17 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.songList}>
-          {artists.map((artist) => (
-            <ArtistCard key={artist.id} artist={artist} />
-          ))}
+          {artists.length > 0 ? (
+            artists.map((artist) => <ArtistCard key={artist.id} artist={artist} />)
+          ) : (
+            <View style={styles.noteCard}>
+              <ThemedText style={styles.noteText} themeColor="textSecondary">
+                {isSearching
+                  ? 'No artist matches yet for this search.'
+                  : 'No artists have been loaded yet.'}
+              </ThemedText>
+            </View>
+          )}
         </View>
       </View>
 
@@ -126,22 +171,36 @@ export default function HomeScreen() {
       <View style={styles.section}>
         <SectionHeader
           eyebrow="Songs"
-          title="Trending for you"
-          subtitle="Tap any song card to set it as the active track and open the player screen."
+          title={isSearching ? 'Track results' : 'Trending for you'}
+          subtitle={
+            isSearching
+              ? 'Tap a search result to make it the active track and open the player.'
+              : 'Tap any song card to set it as the active track and open the player screen.'
+          }
         />
 
         <View style={styles.songList}>
-          {songs.map((song) => (
-            <SongCard
-              key={song.id}
-              song={song}
-              isActive={song.id === currentSong.id}
-              onPress={() => {
-                setSongById(song.id);
-                router.push(`/player/${song.id}`);
-              }}
-            />
-          ))}
+          {songs.length > 0 ? (
+            songs.map((song) => (
+              <SongCard
+                key={song.id}
+                song={song}
+                isActive={song.id === currentSong.id}
+                onPress={() => {
+                  setSongById(song.id);
+                  router.push(`/player/${song.id}`);
+                }}
+              />
+            ))
+          ) : (
+            <View style={styles.noteCard}>
+              <ThemedText style={styles.noteText} themeColor="textSecondary">
+                {isSearching
+                  ? 'No songs matched your search. Try another title or artist name.'
+                  : 'No songs are available right now.'}
+              </ThemedText>
+            </View>
+          )}
         </View>
       </View>
 

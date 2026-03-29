@@ -95,6 +95,7 @@ src/
     player-controls.tsx
     progress-slider.tsx
     screen-container.tsx
+    search-bar.tsx
     section-header.tsx
     song-card.tsx
   constants/
@@ -296,6 +297,20 @@ Implemented:
 Why this was done:
 - to stop guessing whether the frontend is using Audius, fallback data, or no backend at all
 - to make debugging Expo env values much easier during development
+
+### Milestone 8: Audius search on the Home screen
+
+Implemented:
+- added frontend song search and user search services
+- moved search query and search results into shared app state
+- added a reusable search bar component
+- updated the Home screen to show live song and artist search results
+- kept trending songs and featured artists as the default view when the search box is empty
+
+Why this was done:
+- to make the app feel more like a real streaming product instead of a static list
+- to practice connecting React Native UI to backend search routes
+- to keep API logic inside shared state and services, matching the preferred learning flow
 
 ### Next planned milestone
 

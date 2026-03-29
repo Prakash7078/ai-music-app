@@ -8,9 +8,9 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 
 import { mockSongs } from '@/data/mock-songs';
 import { fetchTimedLyrics } from '@/services/lyrics';
-import { fetchSongs } from '@/services/songs';
+import { fetchSongs, searchSongs } from '@/services/songs';
 import { translateLyrics } from '@/services/translation';
-import { fetchFeaturedUsers } from '@/services/users';
+import { fetchFeaturedUsers, searchUsers } from '@/services/users';
 import { ArtistProfile, LyricLine, LyricsLoadState, Song, SupportedLanguage } from '@/types/music';
 
 type AppStateValue = {
@@ -20,8 +20,10 @@ type AppStateValue = {
   artists: ArtistProfile[];
   artistsState: LyricsLoadState;
   artistsError: string | null;
+  searchQuery: string;
+  searchState: LyricsLoadState;
+  searchError: string | null;
   currentSong: Song;
-  currentSongIndex: number;
   lyrics: LyricLine[];
   lyricsState: LyricsLoadState;
   translationState: LyricsLoadState;
@@ -35,6 +37,7 @@ type AppStateValue = {
   playbackState: string;
   activeLyricIndex: number;
   setSongById: (songId: string) => void;
+  setSearchQuery: (query: string) => void;
   selectLanguage: (language: SupportedLanguage) => void;
   togglePlayback: () => void;
   playNext: () => void;
@@ -48,6 +51,16 @@ function getActiveLyricIndex(lyrics: LyricLine[], progressMs: number) {
   return lyrics.findLastIndex((line) => line.timestampMs <= progressMs);
 }
 
+function mergeSongs(primarySongs: Song[], secondarySongs: Song[]) {
+  const mergedSongs = new Map<string, Song>();
+
+  [...primarySongs, ...secondarySongs].forEach((song) => {
+    mergedSongs.set(song.id, song);
+  });
+
+  return Array.from(mergedSongs.values());
+}
+
 export function AppProvider({ children }: React.PropsWithChildren) {
   const [songs, setSongs] = useState<Song[]>(mockSongs);
   const [songsState, setSongsState] = useState<LyricsLoadState>('idle');
@@ -55,7 +68,12 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   const [artists, setArtists] = useState<ArtistProfile[]>([]);
   const [artistsState, setArtistsState] = useState<LyricsLoadState>('idle');
   const [artistsError, setArtistsError] = useState<string | null>(null);
-  const [currentSongIndex, setCurrentSongIndex] = useState(0);
+  const [searchQuery, setSearchQueryValue] = useState('');
+  const [searchSongsResults, setSearchSongsResults] = useState<Song[]>([]);
+  const [searchArtistsResults, setSearchArtistsResults] = useState<ArtistProfile[]>([]);
+  const [searchState, setSearchState] = useState<LyricsLoadState>('idle');
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [currentSongId, setCurrentSongId] = useState(mockSongs[0]?.id ?? '');
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('english');
   const [shouldAutoPlay, setShouldAutoPlay] = useState(true);
   const [baseLyrics, setBaseLyrics] = useState<LyricLine[]>(mockSongs[0]?.lyrics ?? []);
@@ -64,7 +82,10 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   const [translationState, setTranslationState] = useState<LyricsLoadState>('idle');
   const [lyricsError, setLyricsError] = useState<string | null>(null);
 
-  const currentSong = songs[currentSongIndex] ?? songs[0] ?? mockSongs[0];
+  const visibleSongs = searchQuery.trim() ? searchSongsResults : songs;
+  const visibleArtists = searchQuery.trim() ? searchArtistsResults : artists;
+  const songCatalog = useMemo(() => mergeSongs(songs, searchSongsResults), [searchSongsResults, songs]);
+  const currentSong = songCatalog.find((song) => song.id === currentSongId) ?? songCatalog[0] ?? mockSongs[0];
   const player = useAudioPlayer(currentSong.audioSource, {
     updateInterval: 250,
     downloadFirst: true,
@@ -150,10 +171,58 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   }, []);
 
   useEffect(() => {
-    if (currentSongIndex >= songs.length && songs.length > 0) {
-      setCurrentSongIndex(0);
+    if (songCatalog.length > 0 && !songCatalog.some((song) => song.id === currentSongId)) {
+      setCurrentSongId(songCatalog[0].id);
     }
-  }, [currentSongIndex, songs.length]);
+  }, [currentSongId, songCatalog]);
+
+  useEffect(() => {
+    const normalizedQuery = searchQuery.trim();
+
+    if (!normalizedQuery) {
+      setSearchSongsResults([]);
+      setSearchArtistsResults([]);
+      setSearchState('idle');
+      setSearchError(null);
+      return;
+    }
+
+    let isCancelled = false;
+    const timeoutId = setTimeout(async () => {
+      setSearchState('loading');
+      setSearchError(null);
+
+      try {
+        const [matchedSongs, matchedArtists] = await Promise.all([
+          searchSongs(normalizedQuery),
+          searchUsers(normalizedQuery),
+        ]);
+
+        if (isCancelled) {
+          return;
+        }
+
+        setSearchSongsResults(matchedSongs);
+        setSearchArtistsResults(matchedArtists);
+        setSearchState('ready');
+      } catch (error) {
+        if (isCancelled) {
+          return;
+        }
+
+        const message = error instanceof Error ? error.message : 'Unable to search right now';
+        setSearchSongsResults([]);
+        setSearchArtistsResults([]);
+        setSearchError(message);
+        setSearchState('error');
+      }
+    }, 350);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [searchQuery]);
 
   useEffect(() => {
     async function configureAudioMode() {
@@ -178,10 +247,16 @@ export function AppProvider({ children }: React.PropsWithChildren) {
 
   useEffect(() => {
     if (status.didJustFinish) {
-      setCurrentSongIndex((currentIndex) => (currentIndex + 1) % songs.length);
+      const currentIndex = songCatalog.findIndex((song) => song.id === currentSong.id);
+      const nextSong = songCatalog[(currentIndex + 1) % songCatalog.length];
+
+      if (nextSong) {
+        setCurrentSongId(nextSong.id);
+      }
+
       setShouldAutoPlay(true);
     }
-  }, [songs.length, status.didJustFinish]);
+  }, [currentSong.id, songCatalog, status.didJustFinish]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -260,14 +335,17 @@ export function AppProvider({ children }: React.PropsWithChildren) {
 
   const setSongById = useCallback(
     (songId: string) => {
-      const nextIndex = songs.findIndex((song) => song.id === songId);
-      if (nextIndex >= 0) {
-        setCurrentSongIndex(nextIndex);
+      if (songCatalog.some((song) => song.id === songId)) {
+        setCurrentSongId(songId);
         setShouldAutoPlay(true);
       }
     },
-    [songs]
+    [songCatalog]
   );
+
+  const setSearchQuery = useCallback((query: string) => {
+    setSearchQueryValue(query);
+  }, []);
 
   const selectLanguage = useCallback((language: SupportedLanguage) => {
     setSelectedLanguage(language);
@@ -285,14 +363,34 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   }, [player, status.playing]);
 
   const playNext = useCallback(() => {
-    setCurrentSongIndex((currentIndex) => (currentIndex + 1) % songs.length);
+    if (songCatalog.length === 0) {
+      return;
+    }
+
+    const currentIndex = songCatalog.findIndex((song) => song.id === currentSong.id);
+    const nextSong = songCatalog[(currentIndex + 1) % songCatalog.length];
+
+    if (nextSong) {
+      setCurrentSongId(nextSong.id);
+    }
+
     setShouldAutoPlay(true);
-  }, [songs.length]);
+  }, [currentSong.id, songCatalog]);
 
   const playPrevious = useCallback(() => {
-    setCurrentSongIndex((currentIndex) => (currentIndex - 1 + songs.length) % songs.length);
+    if (songCatalog.length === 0) {
+      return;
+    }
+
+    const currentIndex = songCatalog.findIndex((song) => song.id === currentSong.id);
+    const previousSong = songCatalog[(currentIndex - 1 + songCatalog.length) % songCatalog.length];
+
+    if (previousSong) {
+      setCurrentSongId(previousSong.id);
+    }
+
     setShouldAutoPlay(true);
-  }, [songs.length]);
+  }, [currentSong.id, songCatalog]);
 
   const seekTo = useCallback(
     async (nextProgressMs: number) => {
@@ -311,14 +409,16 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     const activeLyricIndex = Math.max(getActiveLyricIndex(lyrics, progressMs), 0);
 
     return {
-      songs,
+      songs: visibleSongs,
       songsState,
       songsError,
-      artists,
+      artists: visibleArtists,
       artistsState,
       artistsError,
+      searchQuery,
+      searchState,
+      searchError,
       currentSong,
-      currentSongIndex,
       lyrics,
       lyricsState,
       translationState,
@@ -332,6 +432,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
       playbackState: status.playbackState,
       activeLyricIndex,
       setSongById,
+      setSearchQuery,
       selectLanguage,
       togglePlayback,
       playNext,
@@ -340,7 +441,6 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     };
   }, [
     currentSong,
-    currentSongIndex,
     durationMs,
     lyrics,
     lyricsError,
@@ -351,9 +451,13 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     seekTo,
     selectLanguage,
     selectedLanguage,
+    searchError,
+    searchQuery,
+    searchState,
     setSongById,
-    songs,
-    artists,
+    setSearchQuery,
+    visibleSongs,
+    visibleArtists,
     artistsError,
     artistsState,
     songsError,

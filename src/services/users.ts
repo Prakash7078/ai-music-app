@@ -23,3 +23,26 @@ export async function fetchFeaturedUsers(): Promise<ArtistProfile[]> {
   const data = (await response.json()) as UsersResponse;
   return data.users;
 }
+
+export async function searchUsers(query: string): Promise<ArtistProfile[]> {
+  const normalizedQuery = query.trim();
+
+  if (!normalizedQuery) {
+    return [];
+  }
+
+  const endpoint = buildApiUrl(`/api/users/search?q=${encodeURIComponent(normalizedQuery)}`);
+
+  if (!endpoint) {
+    return [];
+  }
+
+  const response = await fetch(endpoint);
+
+  if (!response.ok) {
+    throw new Error(`User search failed with status ${response.status}`);
+  }
+
+  const data = (await response.json()) as UsersResponse;
+  return data.users;
+}
