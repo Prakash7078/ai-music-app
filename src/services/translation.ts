@@ -73,5 +73,6 @@ export async function translateLyrics(
       },
     })),
     source: 'fallback',
+    message: 'Backend translation is unavailable. Start the server and add OPENAI_API_KEY for real translations.',
   };
 }

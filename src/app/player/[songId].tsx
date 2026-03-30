@@ -121,6 +121,11 @@ export default function PlayerScreen() {
                 ? 'Translation request failed. Showing available fallback text.'
                 : `Translation layer ready from ${translationSource}.`}
           </ThemedText>
+          {selectedLanguage !== 'english' && translationSource === 'fallback' ? (
+            <ThemedText style={styles.statusText} themeColor="textSecondary">
+              Add `OPENAI_API_KEY` in your `.env`, restart `npm run server`, and reload the app for real translated lyrics.
+            </ThemedText>
+          ) : null}
           {lyricsError ? (
             <ThemedText style={styles.errorText}>{lyricsError}</ThemedText>
           ) : null}

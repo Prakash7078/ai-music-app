@@ -186,6 +186,8 @@ OPENAI_API_KEY=your_openai_api_key
 OPENAI_TRANSLATION_MODEL=gpt-5
 ```
 
+If `OPENAI_API_KEY` is missing, the app will keep showing fallback text and the player screen will now tell you that real translation is unavailable.
+
 To configure the synced lyrics provider explicitly, add:
 
 ```bash
@@ -368,6 +370,16 @@ Why this was done:
 - to move the multilingual lyric feature from demo-only behavior toward real provider-backed behavior
 - to keep the frontend contract simple while improving the backend architecture with dedicated services
 - to make provider failures non-blocking so the app stays usable during development
+
+### Milestone 12: Translation setup visibility
+
+Implemented:
+- surfaced a clearer fallback translation message in the frontend service layer
+- added a direct player screen hint explaining that `OPENAI_API_KEY` is required for real translated lyrics
+
+Why this was done:
+- to make missing translation configuration obvious instead of looking like a silent failure
+- to reduce confusion while testing multilingual lyrics locally
 
 ### Next planned milestone
 
