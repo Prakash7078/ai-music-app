@@ -78,7 +78,7 @@ The project setup is complete, and the first frontend foundation milestone is im
 - Songs can load from the backend API when configured, otherwise they fall back to local demo data
 - Lyrics now pass through a service layer with API-ready fetch and translation functions
 - If no backend URL is configured, the app falls back to local demo lyric data
-- Real third-party lyrics and translation providers are not connected yet
+- LRCLIB and OpenAI integration now have backend hooks, but still depend on your API keys/provider matches
 - Backend is scaffolded, but authentication and database integration have not started yet
 
 ## Project Structure
@@ -178,6 +178,20 @@ AUDIUS_API_BEARER_TOKEN=your_audius_bearer_token
 ```
 
 Without this token, the backend falls back to local demo songs.
+
+To enable real lyric translation through OpenAI, add:
+
+```bash
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_TRANSLATION_MODEL=gpt-5
+```
+
+To configure the synced lyrics provider explicitly, add:
+
+```bash
+LRCLIB_API_BASE_URL=https://lrclib.net/api
+LYRICS_USER_AGENT=ai-music-app/1.0.0
+```
 
 ### Frontend API debug panel
 
@@ -340,6 +354,20 @@ Why this was done:
 - to prevent remote songs from showing an empty lyrics section
 - to make playback controls feel like a real streaming app instead of keeping the previous source active
 - to keep the player usable even before a real third-party lyrics provider is connected
+
+### Milestone 11: Real lyrics and translation providers
+
+Implemented:
+- added a backend lyrics service that queries LRCLIB for synced or plain lyrics and caches results in memory
+- added a backend translation service that calls OpenAI Responses API and caches translated lyric lines in memory
+- updated `/api/lyrics` to prefer catalog lyrics, then provider lyrics, then generated fallback lyrics
+- updated `/api/translate-lyrics` to prefer existing translations, then OpenAI, then fallback text
+- surfaced lyric and translation sources on the player screen for easier debugging
+
+Why this was done:
+- to move the multilingual lyric feature from demo-only behavior toward real provider-backed behavior
+- to keep the frontend contract simple while improving the backend architecture with dedicated services
+- to make provider failures non-blocking so the app stays usable during development
 
 ### Next planned milestone
 

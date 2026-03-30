@@ -4,6 +4,8 @@ import { wait } from '@/utils/async';
 
 type TranslationResponse = {
   lyrics: LyricLine[];
+  source?: string;
+  message?: string;
 };
 
 type TranslationRequest = {
@@ -11,18 +13,27 @@ type TranslationRequest = {
   lyrics: LyricLine[];
 };
 
+export type TranslationResult = {
+  lyrics: LyricLine[];
+  source: string;
+  message?: string;
+};
+
 export async function translateLyrics(
   lyrics: LyricLine[],
   language: SupportedLanguage
-): Promise<LyricLine[]> {
+): Promise<TranslationResult> {
   if (language === 'english') {
-    return lyrics.map((line) => ({
-      ...line,
-      translations: {
-        ...line.translations,
-        english: line.original,
-      },
-    }));
+    return {
+      lyrics: lyrics.map((line) => ({
+        ...line,
+        translations: {
+          ...line.translations,
+          english: line.original,
+        },
+      })),
+      source: 'original',
+    };
   }
 
   const endpoint = buildApiUrl('/api/translate-lyrics');
@@ -44,16 +55,23 @@ export async function translateLyrics(
     }
 
     const data = (await response.json()) as TranslationResponse;
-    return data.lyrics;
+    return {
+      lyrics: data.lyrics,
+      source: data.source || 'fallback',
+      message: data.message,
+    };
   }
 
   await wait(250);
 
-  return lyrics.map((line) => ({
-    ...line,
-    translations: {
-      ...line.translations,
-      [language]: line.translations[language] ?? line.original,
-    },
-  }));
+  return {
+    lyrics: lyrics.map((line) => ({
+      ...line,
+      translations: {
+        ...line.translations,
+        [language]: line.translations[language] ?? line.original,
+      },
+    })),
+    source: 'fallback',
+  };
 }

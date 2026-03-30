@@ -5,6 +5,8 @@ import { wait } from '@/utils/async';
 
 type TimedLyricsResponse = {
   lyrics: LyricLine[];
+  source?: string;
+  message?: string;
 };
 
 const GENERATED_LYRIC_STEPS = [0, 0.18, 0.36, 0.54, 0.72, 0.88];
@@ -37,11 +39,17 @@ function buildGeneratedLyrics(song: Pick<Song, 'id' | 'title' | 'artist' | 'dura
   }));
 }
 
+export type TimedLyricsResult = {
+  lyrics: LyricLine[];
+  source: string;
+  message?: string;
+};
+
 export async function fetchTimedLyrics(
-  song: Pick<Song, 'id' | 'title' | 'artist' | 'durationMs' | 'lyrics'>
-): Promise<LyricLine[]> {
+  song: Pick<Song, 'id' | 'title' | 'artist' | 'album' | 'durationMs' | 'lyrics'>
+): Promise<TimedLyricsResult> {
   const endpoint = buildApiUrl(
-    `/api/lyrics?songId=${encodeURIComponent(song.id)}&title=${encodeURIComponent(song.title)}&artist=${encodeURIComponent(song.artist)}&durationMs=${song.durationMs}`
+    `/api/lyrics?songId=${encodeURIComponent(song.id)}&title=${encodeURIComponent(song.title)}&artist=${encodeURIComponent(song.artist)}&album=${encodeURIComponent(song.album ?? '')}&durationMs=${song.durationMs}`
   );
 
   if (endpoint) {
@@ -52,7 +60,11 @@ export async function fetchTimedLyrics(
     }
 
     const data = (await response.json()) as TimedLyricsResponse;
-    return data.lyrics.length > 0 ? data.lyrics : buildGeneratedLyrics(song);
+    return {
+      lyrics: data.lyrics.length > 0 ? data.lyrics : buildGeneratedLyrics(song),
+      source: data.source || 'generated',
+      message: data.message,
+    };
   }
 
   // Mock backend delay so the app already behaves like a real networked client.
@@ -61,8 +73,14 @@ export async function fetchTimedLyrics(
   const localSong = mockSongs.find((item) => item.id === song.id);
 
   if (!localSong) {
-    return buildGeneratedLyrics(song);
+    return {
+      lyrics: buildGeneratedLyrics(song),
+      source: 'generated',
+    };
   }
 
-  return localSong.lyrics.map((line) => ({ ...line }));
+  return {
+    lyrics: localSong.lyrics.map((line) => ({ ...line })),
+    source: 'catalog',
+  };
 }

@@ -22,6 +22,8 @@ export default function PlayerScreen() {
     lyricsState,
     translationState,
     lyricsError,
+    lyricsSource,
+    translationSource,
     isPlaying,
     isBuffering,
     isAudioReady,
@@ -110,14 +112,14 @@ export default function PlayerScreen() {
               ? 'Loading timed lyrics...'
               : lyricsState === 'error'
                 ? 'Lyrics request failed. Using fallback data.'
-                : 'Timed lyrics ready.'}
+                : `Timed lyrics ready from ${lyricsSource}.`}
           </ThemedText>
           <ThemedText style={styles.statusText} themeColor="textSecondary">
             {translationState === 'loading'
               ? 'Translating into your selected language...'
               : translationState === 'error'
                 ? 'Translation request failed. Showing available fallback text.'
-                : 'Translation layer ready.'}
+                : `Translation layer ready from ${translationSource}.`}
           </ThemedText>
           {lyricsError ? (
             <ThemedText style={styles.errorText}>{lyricsError}</ThemedText>

@@ -1,5 +1,7 @@
 const songModel = require('../models/song.model');
 const audiusService = require('../services/audius.service');
+const lyricsService = require('../services/lyrics.service');
+const translationService = require('../services/translation.service');
 
 function getSongs(_req, res) {
   return res.status(200).json({ songs: songModel.getAllSongs() });
@@ -146,8 +148,8 @@ async function streamTrack(req, res, next) {
   }
 }
 
-function getLyrics(req, res) {
-  const { songId, title, artist, durationMs } = req.query;
+async function getLyrics(req, res, next) {
+  const { songId, title, artist, album, durationMs } = req.query;
 
   if (!songId && !title) {
     return res.status(400).json({ message: 'songId or title query parameter is required' });
@@ -159,28 +161,63 @@ function getLyrics(req, res) {
     return res.status(200).json({ lyrics, source: 'catalog' });
   }
 
-  return res.status(200).json({
-    lyrics: songModel.generateSongLyrics({ songId, title, artist, durationMs }),
-    source: 'generated',
-  });
+  try {
+    const providerLyrics = await lyricsService.getTimedLyrics({
+      id: songId,
+      title,
+      artist,
+      album,
+      durationMs,
+    });
+
+    if (providerLyrics?.lyrics?.length) {
+      return res.status(200).json(providerLyrics);
+    }
+
+    return res.status(200).json({
+      lyrics: songModel.generateSongLyrics({ songId, title, artist, durationMs }),
+      source: 'generated',
+    });
+  } catch (error) {
+    if (!title || !artist) {
+      return next(error);
+    }
+
+    return res.status(200).json({
+      lyrics: songModel.generateSongLyrics({ songId, title, artist, durationMs }),
+      source: 'generated',
+      message: 'Lyrics provider request failed. Using generated fallback lyrics.',
+    });
+  }
 }
 
-function translateLyrics(req, res) {
+async function translateLyrics(req, res, next) {
   const { lyrics, language } = req.body;
 
   if (!Array.isArray(lyrics) || !language) {
     return res.status(400).json({ message: 'lyrics array and language are required' });
   }
 
-  const translatedLyrics = lyrics.map((line) => ({
-    ...line,
-    translations: {
-      ...line.translations,
-      [language]: line.translations?.[language] ?? line.original,
-    },
-  }));
+  try {
+    const translatedLyrics = await translationService.translateLyrics(lyrics, language);
 
-  return res.status(200).json({ lyrics: translatedLyrics });
+    return res.status(200).json(translatedLyrics);
+  } catch (error) {
+    return res.status(200).json({
+      lyrics: lyrics.map((line) => ({
+        ...line,
+        translations: {
+          ...line.translations,
+          [language]: line.translations?.[language] ?? line.original,
+        },
+      })),
+      source: 'fallback',
+      message:
+        error instanceof Error
+          ? `${error.message}. Using fallback translations.`
+          : 'Translation provider failed. Using fallback translations.',
+    });
+  }
 }
 
 module.exports = {

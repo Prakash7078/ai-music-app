@@ -28,6 +28,8 @@ type AppStateValue = {
   lyricsState: LyricsLoadState;
   translationState: LyricsLoadState;
   lyricsError: string | null;
+  lyricsSource: string;
+  translationSource: string;
   selectedLanguage: SupportedLanguage;
   progressMs: number;
   durationMs: number;
@@ -81,6 +83,8 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   const [lyricsState, setLyricsState] = useState<LyricsLoadState>('idle');
   const [translationState, setTranslationState] = useState<LyricsLoadState>('idle');
   const [lyricsError, setLyricsError] = useState<string | null>(null);
+  const [lyricsSource, setLyricsSource] = useState('catalog');
+  const [translationSource, setTranslationSource] = useState('original');
   const [pendingAutoPlay, setPendingAutoPlay] = useState(true);
 
   const visibleSongs = searchQuery.trim() ? searchSongsResults : songs;
@@ -92,10 +96,11 @@ export function AppProvider({ children }: React.PropsWithChildren) {
       id: currentSong.id,
       title: currentSong.title,
       artist: currentSong.artist,
+      album: currentSong.album,
       durationMs: currentSong.durationMs,
       lyrics: currentSong.lyrics,
     }),
-    [currentSong.artist, currentSong.durationMs, currentSong.id, currentSong.lyrics, currentSong.title]
+    [currentSong.album, currentSong.artist, currentSong.durationMs, currentSong.id, currentSong.lyrics, currentSong.title]
   );
   const shouldAutoPlayRef = useRef(shouldAutoPlay);
   const player = useAudioPlayer(null, {
@@ -287,17 +292,22 @@ export function AppProvider({ children }: React.PropsWithChildren) {
       setLyricsState('loading');
       setTranslationState('idle');
       setLyricsError(null);
+      setLyricsSource('loading');
       setBaseLyrics([]);
       setLyrics([]);
 
       try {
-        const fetchedLyrics = await fetchTimedLyrics(lyricsRequestSong);
+        const result = await fetchTimedLyrics(lyricsRequestSong);
 
         if (isCancelled) {
           return;
         }
 
-        setBaseLyrics(fetchedLyrics);
+        setBaseLyrics(result.lyrics);
+        setLyricsSource(result.source);
+        if (result.message) {
+          setLyricsError(result.message);
+        }
         setLyricsState('ready');
       } catch (error) {
         if (isCancelled) {
@@ -307,12 +317,14 @@ export function AppProvider({ children }: React.PropsWithChildren) {
         const message = error instanceof Error ? error.message : 'Unable to load lyrics';
         if (lyricsRequestSong.lyrics.length > 0) {
           setBaseLyrics(lyricsRequestSong.lyrics);
+          setLyricsSource('catalog');
           setLyricsState('ready');
           setLyricsError(message);
           return;
         }
 
         setLyricsError(message);
+        setLyricsSource('error');
         setLyricsState('error');
         setBaseLyrics([]);
       }
@@ -334,15 +346,20 @@ export function AppProvider({ children }: React.PropsWithChildren) {
       }
 
       setTranslationState('loading');
+      setTranslationSource('loading');
 
       try {
-        const translatedLyrics = await translateLyrics(baseLyrics, selectedLanguage);
+        const result = await translateLyrics(baseLyrics, selectedLanguage);
 
         if (isCancelled) {
           return;
         }
 
-        setLyrics(translatedLyrics);
+        setLyrics(result.lyrics);
+        setTranslationSource(result.source);
+        if (result.message) {
+          setLyricsError(result.message);
+        }
         setTranslationState('ready');
       } catch (error) {
         if (isCancelled) {
@@ -353,6 +370,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
           error instanceof Error ? error.message : 'Unable to translate lyrics right now';
         setLyricsError(message);
         setLyrics(baseLyrics);
+        setTranslationSource('error');
         setTranslationState('error');
       }
     }
@@ -461,6 +479,8 @@ export function AppProvider({ children }: React.PropsWithChildren) {
       lyricsState,
       translationState,
       lyricsError,
+      lyricsSource,
+      translationSource,
       selectedLanguage,
       progressMs,
       durationMs,
@@ -482,6 +502,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     durationMs,
     lyrics,
     lyricsError,
+    lyricsSource,
     lyricsState,
     playNext,
     playPrevious,
@@ -505,6 +526,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     status.playbackState,
     status.playing,
     togglePlayback,
+    translationSource,
     translationState,
   ]);
 
