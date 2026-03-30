@@ -59,6 +59,8 @@ Copy the example env file before starting real API integration:
 cp .env.example .env
 ```
 
+Keep actual keys only in `.env`. The tracked `.env.example` file should stay a safe placeholder template.
+
 ## Current Progress
 
 The project setup is complete, and the first frontend foundation milestone is implemented.
@@ -187,6 +189,8 @@ OPENAI_TRANSLATION_MODEL=gpt-5
 ```
 
 If `OPENAI_API_KEY` is missing, the app will keep showing fallback text and the player screen will now tell you that real translation is unavailable.
+
+Use `.env` for your real keys and leave `.env.example` as placeholders only.
 
 To configure the synced lyrics provider explicitly, add:
 
@@ -380,6 +384,17 @@ Implemented:
 Why this was done:
 - to make missing translation configuration obvious instead of looking like a silent failure
 - to reduce confusion while testing multilingual lyrics locally
+
+### Milestone 13: Safe local env setup
+
+Implemented:
+- sanitized `.env.example` so it contains placeholders instead of real-looking credentials
+- added a local `.env` template file in the project root for private machine-specific setup
+- documented that `.env` is for real secrets while `.env.example` stays safe to commit
+
+Why this was done:
+- to make local translation and Audius setup easier without copying secrets into tracked files
+- to reduce the chance of thinking the backend is configured when no project-root `.env` exists
 
 ### Next planned milestone
 
