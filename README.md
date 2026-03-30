@@ -396,6 +396,17 @@ Why this was done:
 - to make local translation and Audius setup easier without copying secrets into tracked files
 - to reduce the chance of thinking the backend is configured when no project-root `.env` exists
 
+### Milestone 14: Resilient Audius fallback
+
+Implemented:
+- updated the backend Audius discovery and search controllers to return local fallback songs and artists whenever Audius requests fail
+- kept track streaming failures explicit while avoiding full backend route failures for song and artist lists
+- preserved helpful response messages so the frontend can explain when it is showing fallback content
+
+Why this was done:
+- to keep the app usable even when the Audius API is unreachable, rate-limited, or configured with a bad token
+- to prevent empty home screens caused by backend discovery routes throwing instead of falling back
+
 ### Next planned milestone
 
 - add authentication routes and middleware
